@@ -207,18 +207,22 @@ def compose(profile, item: dict, background: Image.Image, reference: str) -> Ima
         tk, bool(cfg.get("shadow", True)),
     )
 
-    # Optional handle in the bottom margin.
+    # Optional line in the bottom margin - a handle, or a dedication.
     signature = cfg.get("signature") or ""
     if signature:
+        sig_size = int(cfg.get("signature_size", 24))
         sig_font = ImageFont.truetype(
-            str(ROOT / cfg.get("reference_font", cfg["font"])),
-            int(cfg.get("signature_size", 24)),
+            str(ROOT / cfg.get("signature_font", cfg.get("reference_font", cfg["font"]))),
+            sig_size,
         )
         alpha = int(255 * float(cfg.get("signature_opacity", 0.5)))
-        ImageDraw.Draw(canvas).text(
-            (width / 2, height - height * 0.055),
-            signature, font=sig_font, anchor="mm",
-            fill=_hex_to_rgb(cfg.get("signature_color", "#FFFFFF")) + (alpha,),
+        # Goes through the same shaping and shadow path as the verse: this line
+        # may be Arabic, and it sits on unpredictable parts of the photograph.
+        _draw_block(
+            canvas, [_prepare(signature, direction)], sig_font, sig_size * 1.4,
+            height - height * 0.075, width / 2,
+            _hex_to_rgb(cfg.get("signature_color", "#FFFFFF")) + (alpha,),
+            tk, bool(cfg.get("shadow", True)),
         )
 
     return canvas.convert("RGB")

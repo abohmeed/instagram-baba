@@ -199,6 +199,31 @@ def long_text_still_fits_the_canvas():
     check(font.size >= cfg["min_font_size"], "font shrank below the floor")
 
 
+@test
+def the_dedication_never_collides_with_the_verse():
+    """The bottom line sits in a fixed margin; long verses must clear it."""
+    prof = profile_mod.load("mahmoudelfakharany8")
+    cfg = prof["image"]
+    if not cfg.get("signature"):
+        return
+    pool = content.load_pool(prof.pool_path)
+    box = (int(cfg["width"] * cfg["text_box"]["width_pct"]),
+           int(cfg["height"] * cfg["text_box"]["height_pct"]))
+    sig_top = cfg["height"] - cfg["height"] * 0.075 - cfg["signature_size"] * 0.7
+    gap = cfg["height"] * cfg.get("reference_gap_pct", 0.05)
+    ref_lh = cfg["reference_size"] * 1.4
+
+    worst = None
+    for verse in pool:
+        font, lines, lh = render._layout(verse["text"], cfg, box, "rtl", "ar")
+        group = len(lines) * lh + gap + ref_lh
+        bottom = (cfg["height"] - group) / 2 + group
+        slack = sig_top - bottom
+        if worst is None or slack < worst[1]:
+            worst = (verse["ref"], slack)
+    check(worst[1] > 0, f"{worst[0]} overlaps the dedication by {-worst[1]:.0f}px")
+
+
 # -------------------------------------------------------------------------- library
 def _fake_manifest(n: int) -> dict:
     return {"profile": "t", "edition": 1, "count": n, "per_verse": 1,
