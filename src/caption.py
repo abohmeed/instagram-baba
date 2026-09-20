@@ -32,9 +32,26 @@ def _fields(item: dict, numerals: str = "latin") -> dict:
     return fields
 
 
-def build(profile, item: dict, rng: random.Random | None = None) -> str:
+def variant_config(profile, variant: str | None = None) -> dict:
+    """The caption settings for one destination.
+
+    caption.variants.<name> overlays the top-level caption block, so a
+    destination only states what differs - usually a shorter hashtag list,
+    because a wall of tags reads as spam outside Instagram.
+    """
+    cfg = dict(profile["caption"])
+    if variant:
+        overrides = (cfg.get("variants") or {}).get(variant)
+        if overrides:
+            cfg.update(overrides)
+    cfg.pop("variants", None)
+    return cfg
+
+
+def build(profile, item: dict, rng: random.Random | None = None,
+          variant: str | None = None) -> str:
     rng = rng or random.Random()
-    cfg = profile["caption"]
+    cfg = variant_config(profile, variant)
 
     tags = list(cfg.get("hashtags") or [])
     limit = min(int(cfg.get("hashtag_count", len(tags)) or len(tags)), MAX_HASHTAGS)

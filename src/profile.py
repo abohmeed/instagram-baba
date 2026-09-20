@@ -51,10 +51,21 @@ DEFAULTS = {
         "unsplash_access_key": "UNSPLASH_ACCESS_KEY",
         "pexels_api_key": "PEXELS_API_KEY",
         "pixabay_api_key": "PIXABAY_API_KEY",
+        # Both optional: a system user token can derive the Page token itself,
+        # and the Page id normally lives in the profile rather than a secret.
+        "fb_page_id": "FB_PAGE_ID",
+        "fb_page_token": "FB_PAGE_TOKEN",
     },
     "publish": {
         "api": "facebook",
         "api_version": "v21.0",
+        # Mirror the same image to a Facebook Page. Off unless a profile turns
+        # it on; page_id blank means "discover the token's only Page".
+        "facebook": {
+            "enabled": False,
+            "page_id": "",
+            "caption_variant": "facebook",
+        },
         "url_mode": "raw",
         "base_url": "auto",
         "posts_dir": "docs/posts",

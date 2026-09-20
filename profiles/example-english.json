@@ -3,15 +3,16 @@
   "display_name": "Example second account",
   "notes": "Template showing how to run a second Instagram account off the same codebase: different content pack, language, timezone, look and secrets.",
   "timezone": "America/New_York",
-  "post_window": { "start_hour": 8, "end_hour": 20 },
-
+  "post_window": {
+    "start_hour": 8,
+    "end_hour": 20
+  },
   "content": {
     "pack": "quotes",
     "pool": "content/quotes/verses.json",
     "direction": "ltr",
     "language": "en"
   },
-
   "image": {
     "width": 1080,
     "height": 1350,
@@ -19,7 +20,10 @@
     "reference_font": "assets/fonts/Amiri-Regular.ttf",
     "max_font_size": 76,
     "min_font_size": 28,
-    "text_box": { "width_pct": 0.8, "height_pct": 0.55 },
+    "text_box": {
+      "width_pct": 0.8,
+      "height_pct": 0.55
+    },
     "line_spacing": 1.45,
     "overlay_opacity": 0.42,
     "vignette": 0.45,
@@ -28,27 +32,49 @@
     "signature": "@example",
     "signature_opacity": 0.45
   },
-
   "background": {
     "provider": "pexels",
-    "queries": ["minimal landscape", "ocean waves", "city fog"],
+    "queries": [
+      "minimal landscape",
+      "ocean waves",
+      "city fog"
+    ],
     "orientation": "portrait",
     "fallback_dir": "assets/backgrounds"
   },
-
   "caption": {
     "template": "{text}\n\n{reference}\n\n{hashtags}",
     "reference_format": "— {surah_name}, {ayah_ref}",
-    "hashtags": ["#quotes", "#daily", "#inspiration"],
-    "hashtag_count": 3
+    "hashtags": [
+      "#quotes",
+      "#daily",
+      "#inspiration"
+    ],
+    "hashtag_count": 3,
+    "variants": {
+      "facebook": {
+        "hashtags": [
+          "#daily"
+        ],
+        "hashtag_count": 1
+      }
+    }
   },
-
   "secrets": {
     "ig_user_id": "IG_USER_ID_EXAMPLE",
     "ig_access_token": "IG_ACCESS_TOKEN_EXAMPLE",
     "unsplash_access_key": "UNSPLASH_ACCESS_KEY",
     "pexels_api_key": "PEXELS_API_KEY"
   },
-
-  "publish": { "api": "facebook", "base_url": "auto", "posts_dir": "docs/posts", "keep_archive": true }
+  "publish": {
+    "api": "facebook",
+    "base_url": "auto",
+    "posts_dir": "docs/posts",
+    "keep_archive": true,
+    "facebook": {
+      "enabled": false,
+      "page_id": "",
+      "caption_variant": "facebook"
+    }
+  }
 }

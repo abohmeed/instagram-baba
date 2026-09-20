@@ -90,7 +90,17 @@
       "#طمأنينة",
       "#إيمان"
     ],
-    "hashtag_count": 12
+    "hashtag_count": 12,
+    "variants": {
+      "facebook": {
+        "hashtags": [
+          "#قرآن",
+          "#آية_اليوم",
+          "#صدقة_جارية"
+        ],
+        "hashtag_count": 3
+      }
+    }
   },
   "secrets": {
     "ig_user_id": "IG_USER_ID",
@@ -102,6 +112,11 @@
     "api": "facebook",
     "base_url": "auto",
     "posts_dir": "docs/posts",
-    "keep_archive": true
+    "keep_archive": true,
+    "facebook": {
+      "enabled": true,
+      "page_id": "106304495376583",
+      "caption_variant": "facebook"
+    }
   }
 }

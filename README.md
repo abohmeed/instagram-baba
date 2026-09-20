@@ -1,7 +1,8 @@
 # instagram-baba
 
-Posts one verse of the Qur'an a day to Instagram, set in Uthmani script over a
-darkened nature photograph, at a random time each day.
+Posts one verse of the Qur'an a day to Instagram — and to a Facebook Page, if
+the profile asks for one — set in Uthmani script over a darkened nature
+photograph, at a random time each day.
 
 Built for **@mahmoudelfakharany8**, a memorial account. Nothing about Hell or
 punishment is ever posted — see [Content safety](#content-safety).
@@ -20,8 +21,9 @@ ONCE  ────────────────────────�
                                                      git commit (public)
 
 DAILY ─────────────────────────────────────────────────────────────────────
-  hourly cron ─► due? ─► pick unused entry ─► Graph API ─► Instagram
-                          (no rendering, no photo API, no push)
+  hourly cron ─► due? ─► pick unused entry ─► Graph API ─┬─► Instagram
+                          (no rendering, no photo API,   └─► Facebook Page
+                           no push)                          (optional)
 ```
 
 ## How it runs
@@ -53,6 +55,14 @@ them, so the working tree holds exactly one library.
 
 Images are served from `raw.githubusercontent.com`, which needs the repo to be
 public. `docs/` doubles as a browsable archive if you enable Pages.
+
+**A second destination is one POST.** With `publish.facebook.enabled` a profile
+also posts the same image to a Facebook Page, from the same public URL and with
+its own caption — the same verse, fewer hashtags, since a wall of tags reads as
+spam outside Instagram. No extra secret: the Page token is derived from the
+Instagram one. Instagram goes first and the day is recorded on its result, so a
+Page failure is logged and the run still succeeds. See
+[SETUP.md](SETUP.md#also-posting-to-the-facebook-page).
 
 ## Content safety
 
@@ -100,6 +110,10 @@ python -m src.library --profile mahmoudelfakharany8 --build
 # Where the cycle is, and how long until it recycles
 python -m src.library --profile mahmoudelfakharany8 --status
 
+# Rewrite captions in the manifest after a template or hashtag change.
+# Manifest only: no rendering, no downloads, no API calls.
+python -m src.library --profile mahmoudelfakharany8 --recaption
+
 # Render six throwaway samples to iterate on the design
 python -m src.main --profile mahmoudelfakharany8 --preview 6
 
@@ -110,7 +124,7 @@ python -m src.main --profile mahmoudelfakharany8 --force
 # discover the Instagram user ID behind your Facebook Page
 python -m src.credentials --profile mahmoudelfakharany8 --write-env
 
-# Check credentials and how long the token has left
+# Check credentials, token lifetime, and that the Page can be posted to
 python -m src.main --profile mahmoudelfakharany8 --check-token
 
 # Renew the 60-day token in place (no browser) and push it to GitHub
@@ -123,7 +137,8 @@ python -m src.main --profile mahmoudelfakharany8 --live --force
 python -m tests.run
 ```
 
-Posting is opt-in: without `--live` (or `LIVE=true`) nothing reaches Instagram.
+Posting is opt-in: without `--live` (or `LIVE=true`) nothing reaches Instagram
+or Facebook.
 
 ## Layout
 
@@ -141,6 +156,7 @@ src/
   render.py            image composition, Arabic layout, balanced wrapping
   caption.py           caption from the profile's template
   publish.py           Instagram Graph API
+  facebook.py          the optional Facebook Page mirror
   credentials.py       one-time token exchange and account discovery
   safety.py            the Hell/punishment and needs-context filters
   arabic.py            normalisation, numerals, waqf stripping
@@ -152,8 +168,8 @@ docs/library/<profile>/ every image, rendered up front
 
 1. Copy a profile: `cp profiles/example-english.json profiles/my-account.json`.
 2. Edit it — timezone, window, image size, fonts, colours, background queries,
-   caption template, hashtags, and the **names** of the environment variables
-   holding its secrets.
+   caption template, hashtags, whether it mirrors to a Facebook Page, and the
+   **names** of the environment variables holding its secrets.
 3. Point `content.pack` / `content.pool` at a JSON file of
    `{ref, text, ...}` records. Any field in a record is available to the
    caption template.

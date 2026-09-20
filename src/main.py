@@ -19,8 +19,9 @@ from pathlib import Path
 
 import requests
 
-from . import background, caption as caption_mod, content, library as library_mod
-from . import profile as profile_mod, publish as publish_mod, render, schedule
+from . import background, caption as caption_mod, content, facebook as facebook_mod
+from . import library as library_mod, profile as profile_mod, publish as publish_mod
+from . import render, schedule
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -121,6 +122,20 @@ def cmd_check_token(profile) -> int:
     if isinstance(days, (int, float)) and days < 14:
         print("\n  ! Token expires soon - refresh it (see SETUP.md, step 7).")
         return 1
+
+    if facebook_mod.enabled(profile):
+        try:
+            page = facebook_mod.check(profile)
+        except RuntimeError as exc:
+            print(f"\n  ! facebook: {exc}")
+            return 1
+        print(f"\n  page     : {page['page_name']} ({page['page_id']})")
+        print(f"  can post : {'yes' if page['can_post'] else 'no'}")
+        if not page["can_post"]:
+            print(f"\n  ! The token is missing {facebook_mod.PAGE_SCOPE}, which Page "
+                  f"publishing requires.\n    Instagram is unaffected; see SETUP.md, "
+                  f"'Also posting to the Facebook Page'.")
+            return 1
     return 0
 
 
@@ -183,6 +198,14 @@ def cmd_run(profile, args) -> int:
     print(item["caption"])
     print("---------------\n")
 
+    mirror = facebook_mod.enabled(profile)
+    if mirror:
+        fb_caption = facebook_mod.caption_for(profile, item)
+        if fb_caption != item["caption"]:
+            print("--- facebook caption ---")
+            print(fb_caption)
+            print("------------------------\n")
+
     if not live:
         print("Dry run: nothing posted. Pass --live (or set LIVE=true) to publish.")
         return 0
@@ -193,6 +216,19 @@ def cmd_run(profile, args) -> int:
 
     result = publish_mod.post(profile, image_url, item["caption"])
     print(f"  posted : {result.get('permalink') or result['media_id']}")
+
+    if mirror:
+        # Instagram has already gone out and is the record of truth for the
+        # day. A Page problem - a lapsed scope, a renamed Page - must not make
+        # the run fail, or a working streak turns into a daily failure email.
+        try:
+            fb = facebook_mod.post(profile, image_url, fb_caption)
+            print(f"  facebook: {fb['permalink']}")
+            result["facebook"] = fb
+        except Exception as exc:  # noqa: BLE001
+            print(f"  ! facebook: {exc}")
+            print("    Instagram succeeded; the day is recorded.")
+            result["facebook"] = {"error": str(exc)}
 
     content.record(history, {
         "date": local_date,

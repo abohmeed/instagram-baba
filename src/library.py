@@ -54,6 +54,17 @@ def save(profile, data: dict) -> Path:
     return path
 
 
+def captions_for(profile, verse: dict, rng: random.Random) -> dict:
+    """One caption per destination that asks for its own.
+
+    The keys are whatever caption.variants defines in the profile, so adding a
+    destination is a profile change, not a code change.
+    """
+    variants = profile["caption"].get("variants") or {}
+    return {name: caption_mod.build(profile, verse, rng, variant=name)
+            for name in variants}
+
+
 def cycle_state(profile, manifest: dict, history: dict) -> dict:
     """Where we are in the current pass through the library."""
     posted = [p for p in history.get("posts", []) if p.get("status") == "posted"]
@@ -136,6 +147,7 @@ def build(profile, per_verse: int = 1, rng: random.Random | None = None,
                 "surah_name": verse.get("surah_name", ""),
                 "file": str(out_path.relative_to(ROOT)),
                 "caption": caption_mod.build(profile, verse, rng),
+                "captions": captions_for(profile, verse, rng),
                 "background": {
                     "provider": photo.get("provider"),
                     "id": photo.get("id"),
@@ -212,6 +224,7 @@ def rerender(profile, rng: random.Random | None = None) -> dict:
             )
             render.save(composed, ROOT / item["file"])
             item["caption"] = caption_mod.build(profile, verse, rng)
+            item["captions"] = captions_for(profile, verse, rng)
         except Exception as exc:  # noqa: BLE001
             failures.append(f"{item['ref']}: {exc}")
             continue
@@ -230,6 +243,40 @@ def rerender(profile, rng: random.Random | None = None) -> dict:
     return manifest
 
 
+def recaption(profile, rng: random.Random | None = None) -> dict:
+    """Rewrite the manifest's captions, leaving every image untouched.
+
+    For caption-only changes - a reworded template, a new hashtag set, a second
+    destination that wants its own wording. Costs nothing: no downloads, no
+    rendering, no stock API. A full --rerender would redraw 300-odd images to
+    achieve the same thing.
+    """
+    rng = rng or random.Random()
+    manifest = load(profile)
+    pool = {v["ref"]: v for v in content.load_pool(profile.pool_path)}
+
+    changed, missing = 0, []
+    for item in manifest["items"]:
+        verse = pool.get(item["ref"])
+        if verse is None:
+            missing.append(item["ref"])
+            continue
+        before = (item.get("caption"), item.get("captions"))
+        item["caption"] = caption_mod.build(profile, verse, rng)
+        item["captions"] = captions_for(profile, verse, rng)
+        if before != (item["caption"], item["captions"]):
+            changed += 1
+
+    manifest["recaptioned_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    save(profile, manifest)
+    print(f"Rewrote captions for {changed} of {len(manifest['items'])} entries "
+          f"(edition {manifest['edition']} kept, images untouched)")
+    if missing:
+        print(f"  ! {len(missing)} refs are no longer in the pool: "
+              f"{', '.join(missing[:5])}")
+    return manifest
+
+
 def main(argv=None) -> int:
     import argparse
     from . import profile as profile_mod
@@ -239,6 +286,8 @@ def main(argv=None) -> int:
     parser.add_argument("--build", action="store_true", help="render the library")
     parser.add_argument("--rerender", action="store_true",
                         help="redraw on the existing backgrounds (no stock API calls)")
+    parser.add_argument("--recaption", action="store_true",
+                        help="rewrite captions in the manifest only; no rendering")
     parser.add_argument("--per-verse", type=int, default=1,
                         help="images per verse (different backgrounds)")
     parser.add_argument("--status", action="store_true",
@@ -274,6 +323,10 @@ def main(argv=None) -> int:
                 build(prof, manifest.get("per_verse", 1), rng)
             else:
                 print("\nCycle still running - nothing to do.")
+        return 0
+
+    if args.recaption:
+        recaption(prof, rng)
         return 0
 
     if args.rerender:

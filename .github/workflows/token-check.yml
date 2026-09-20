@@ -3,6 +3,10 @@ name: token check
 # Instagram long-lived tokens expire after 60 days. This runs weekly and fails
 # (which emails you) once the token has under 14 days left, so the streak never
 # breaks silently. Refreshing is one command - see SETUP.md, step 7.
+#
+# For profiles that also post to a Facebook Page it checks the Page is reachable
+# and the token still carries pages_manage_posts, which is the one thing that
+# can be wrong while Instagram keeps working.
 on:
   schedule:
     - cron: "0 9 * * 1"
@@ -26,4 +30,6 @@ jobs:
       - env:
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
         run: python -m src.main --profile "${{ matrix.profile }}" --check-token

@@ -14,7 +14,7 @@ on:
         required: false
         default: ""
       live:
-        description: "Actually post to Instagram"
+        description: "Actually post (Instagram, and the Facebook Page if enabled)"
         type: boolean
         default: false
       force:
@@ -70,6 +70,11 @@ jobs:
           # One entry per secret name referenced in profiles/*.json.
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          # Both optional. A system user token derives the Page token itself,
+          # and the Page id normally sits in the profile; set these only when a
+          # Page is administered separately from the Instagram account.
+          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
+          FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
         run: |
           python -m src.main --profile "${{ matrix.profile }}" \
             ${{ github.event.inputs.force == 'true' && '--force' || '' }}

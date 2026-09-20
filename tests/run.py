@@ -13,7 +13,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from src import caption, content, library, profile as profile_mod  # noqa: E402
+from src import caption, content, facebook, library, profile as profile_mod  # noqa: E402
 from src import render, safety, schedule  # noqa: E402
 from src.arabic import normalise, to_arabic_digits  # noqa: E402
 
@@ -364,6 +364,130 @@ def library_paths_land_under_docs():
     directory = library.library_dir(prof)
     check(directory.name == prof.name, directory)
     check("docs/library" in str(directory), directory)
+
+
+# ------------------------------------------------------------------------- facebook
+@test
+def the_facebook_caption_is_the_same_verse_with_fewer_hashtags():
+    prof = profile_mod.load("mahmoudelfakharany8")
+    pool = {v["ref"]: v for v in content.load_pool(prof.pool_path)}
+    item = pool["94:5-6"]
+    rng = random.Random(7)
+
+    ig = caption.build(prof, item, rng)
+    fb = caption.build(prof, item, rng, variant="facebook")
+    check(item["text"] in fb, "the verse itself must not change between networks")
+    check(caption.reference_text(prof, item) in fb, "reference missing from fb caption")
+    check(fb.count("#") < ig.count("#"),
+          f"facebook should carry fewer hashtags: {fb.count('#')} vs {ig.count('#')}")
+    check(fb.count("#") == 3, f"expected 3 hashtags, got {fb.count('#')}")
+
+
+@test
+def a_caption_variant_only_overrides_what_it_names():
+    """An override of hashtags must not drop the template or the numerals."""
+    prof = profile_mod.load("mahmoudelfakharany8")
+    base = caption.variant_config(prof, None)
+    fb = caption.variant_config(prof, "facebook")
+    for key in ("template", "reference_format", "numerals"):
+        check(fb.get(key) == base.get(key), f"variant lost {key}")
+    check(fb["hashtags"] != base["hashtags"], "variant did not override hashtags")
+    check("variants" not in fb, "variants key leaked into the resolved config")
+
+
+@test
+def an_unknown_variant_falls_back_to_the_default_caption():
+    prof = profile_mod.load("mahmoudelfakharany8")
+    pool = content.load_pool(prof.pool_path)
+    item = pool[0]
+    check(caption.build(prof, item, random.Random(1), variant="mastodon")
+          == caption.build(prof, item, random.Random(1)),
+          "an undefined variant must not change the caption")
+
+
+@test
+def every_library_entry_carries_the_facebook_caption():
+    """The daily run posts what was reviewed, so the manifest must hold both."""
+    prof = profile_mod.load("mahmoudelfakharany8")
+    if not facebook.enabled(prof):
+        return
+    path = library.manifest_path(prof)
+    if not path.exists():
+        return  # nothing built in this checkout
+    import json as _json
+    items = _json.loads(path.read_text("utf-8"))["items"]
+    variant = facebook.config(prof)["caption_variant"]
+    missing = [i["id"] for i in items if not (i.get("captions") or {}).get(variant)]
+    check(not missing,
+          f"{len(missing)}/{len(items)} entries have no {variant} caption; run "
+          f"python -m src.library --profile {prof.name} --recaption")
+
+
+@test
+def an_old_library_entry_still_posts_its_instagram_caption():
+    """Entries built before variants existed must not break the run."""
+    prof = profile_mod.load("mahmoudelfakharany8")
+    legacy = {"id": "0001", "ref": "1:1", "caption": "only one caption"}
+    check(facebook.caption_for(prof, legacy) == "only one caption",
+          "a pre-variants entry should fall back, not raise")
+
+
+@test
+def facebook_is_off_unless_a_profile_asks_for_it():
+    check(not facebook.enabled(profile_mod.load("example-english")),
+          "mirroring must be opt-in per profile")
+    check(facebook.enabled(profile_mod.load("mahmoudelfakharany8")),
+          "the memorial profile mirrors to its Page")
+
+
+@test
+def a_facebook_failure_does_not_lose_the_instagram_post():
+    """Instagram has already gone out; the day must still be recorded."""
+    import argparse
+    import json as _json
+
+    from src import main as main_mod
+
+    prof = profile_mod.load("mahmoudelfakharany8")
+    path = library.manifest_path(prof)
+    if not path.exists():
+        return
+    manifest = _json.loads(path.read_text("utf-8"))
+
+    calls = {}
+    originals = (library.load, main_mod.publish_mod.post, main_mod.facebook_mod.post,
+                 main_mod.wait_for_url, main_mod.content.save_history,
+                 main_mod.schedule.is_due)
+
+    def fake_ig_post(_p, url, _caption):
+        calls["ig"] = url
+        return {"media_id": "111", "permalink": "https://instagram.com/p/x"}
+
+    def fake_fb_post(_p, _url, _caption):
+        raise RuntimeError("(#200) requires pages_manage_posts")
+
+    recorded = {}
+    library.load = lambda _p: manifest
+    main_mod.publish_mod.post = fake_ig_post
+    main_mod.facebook_mod.post = fake_fb_post
+    main_mod.wait_for_url = lambda *a, **k: True
+    main_mod.content.save_history = lambda _path, history: recorded.update(history=history)
+    try:
+        import os
+        os.environ["GITHUB_REPOSITORY"] = "someone/instagram-baba"
+        args = argparse.Namespace(live=True, force=True, push=False)
+        code = main_mod.cmd_run(prof, args)
+    finally:
+        (library.load, main_mod.publish_mod.post, main_mod.facebook_mod.post,
+         main_mod.wait_for_url, main_mod.content.save_history,
+         main_mod.schedule.is_due) = originals
+
+    check(code == 0, f"a Page failure must not fail the run, got exit {code}")
+    check(calls.get("ig"), "Instagram was never called")
+    posts = recorded.get("history", {}).get("posts", [])
+    check(posts and posts[-1]["status"] == "posted", "the day was not recorded")
+    check("error" in posts[-1].get("facebook", {}),
+          f"the Page failure should be recorded: {posts[-1].get('facebook')}")
 
 
 # -------------------------------------------------------------------------- profile

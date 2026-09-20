@@ -94,6 +94,9 @@ Open the **Graph API Explorer**
    `instagram_basic`, `instagram_content_publish`, `pages_show_list`,
    `pages_read_engagement`, `business_management`.
 
+   Add `pages_manage_posts` as well if the profile also mirrors to a Facebook
+   Page — see *Also posting to the Facebook Page* below.
+
    **`business_management` is not optional if your Page belongs to a Business
    Portfolio**, which it does by default for anything created in recent years.
    Without it, `/me/accounts` returns an empty list instead of an error — every
@@ -221,6 +224,82 @@ image posted. The bot doesn't depend on this; it reads from
 
 ---
 
+## Also posting to the Facebook Page
+
+The same image can go to a Facebook Page on the same run. Instagram stays the
+primary destination: it posts first, and the day is recorded on its result.
+
+Turn it on in the profile:
+
+```json
+"publish": {
+  "facebook": {
+    "enabled": true,
+    "page_id": "106304495376583",
+    "caption_variant": "facebook"
+  }
+}
+```
+
+Leave `page_id` empty and it uses the token's only Page, erroring if there is
+more than one.
+
+**No new secret is needed.** Meta will hand out a Page token derived from
+`IG_ACCESS_TOKEN` (`GET /<page-id>?fields=access_token`), and when the source
+is a system user token, that Page token never expires either. Set `FB_PAGE_ID`
+or `FB_PAGE_TOKEN` only if the Page is administered separately from the
+Instagram account.
+
+**One scope must be added: `pages_manage_posts`.** Everything else can be
+correct and publishing still fails without it — Instagram keeps working, so
+nothing else gives the game away. The system user token you already have does
+not carry it, so regenerate it (*Or stop refreshing entirely*, step 6, with
+`pages_manage_posts` ticked) and set the secret again.
+
+Check before trusting it:
+
+```bash
+python -m src.main --profile mahmoudelfakharany8 --check-token
+```
+
+It names the Page and prints `can post : yes` once the scope is there.
+`token-check.yml` runs the same check weekly.
+
+### The Facebook caption
+
+Twelve hashtags read as spam outside Instagram, so the Page gets its own
+shorter caption. The verse and the reference are identical; only the tags
+differ:
+
+```json
+"caption": {
+  "hashtags": ["#قرآن", "..."],
+  "hashtag_count": 12,
+  "variants": {
+    "facebook": { "hashtags": ["#قرآن", "#آية_اليوم", "#صدقة_جارية"],
+                  "hashtag_count": 3 }
+  }
+}
+```
+
+A variant overlays the caption block, so it only states what differs. Captions
+live in the library manifest, so after changing one:
+
+```bash
+python -m src.library --profile mahmoudelfakharany8 --recaption
+```
+
+That rewrites the manifest alone — no rendering, no downloads, no API calls.
+An entry with no variant caption (a library built before this existed) posts
+the Instagram caption rather than failing.
+
+### When the Page fails
+
+A Page error after Instagram has posted is printed and recorded in
+`history.json`, and the run still exits 0. Instagram is the record of truth for
+the day, and a broken Page must not turn a working streak into a daily failure
+email. The weekly token check is what tells you the Page is unhappy.
+
 ## Keeping it running
 
 **The token expires every 60 days.** This is the single thing most likely to
@@ -256,7 +335,8 @@ expire, which removes this chore for good.
    an app role the token wizard stops at "No permissions available".
 6. **Generate token** → select the app → expiry **Never** → tick
    `instagram_basic`, `instagram_content_publish`, `pages_show_list`,
-   `pages_read_engagement`, `business_management`
+   `pages_read_engagement`, `business_management`, and — if you mirror to the
+   Page — `pages_manage_posts`
 7. Copy it, then `./scripts/set-secret.sh IG_ACCESS_TOKEN` (reads the
    clipboard, so the token never lands in a terminal or a transcript), and
    `gh secret set IG_ACCESS_TOKEN --repo <owner>/<repo> --body "$IG_ACCESS_TOKEN"`

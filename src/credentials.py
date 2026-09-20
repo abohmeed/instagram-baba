@@ -36,6 +36,18 @@ REQUIRED_SCOPES = {
     "business_management",
 }
 
+# Only needed by profiles that also mirror to a Facebook Page. Instagram
+# publishing works perfectly well without it, which is exactly why its absence
+# is easy to miss.
+PAGE_SCOPE = "pages_manage_posts"
+
+
+def required_scopes(prof=None) -> set:
+    scopes = set(REQUIRED_SCOPES)
+    if prof and (prof["publish"].get("facebook") or {}).get("enabled"):
+        scopes.add(PAGE_SCOPE)
+    return scopes
+
 
 class SetupError(RuntimeError):
     pass
@@ -137,7 +149,7 @@ def _refresh(args, prof) -> int:
     after = inspect(token)
     print(f"New token    : {after['days_left']} days left")
 
-    missing = REQUIRED_SCOPES - after["scopes"]
+    missing = required_scopes(prof) - after["scopes"]
     if missing:
         print(f"\n  ! The refreshed token is missing: {', '.join(sorted(missing))}")
         return 1
@@ -224,11 +236,14 @@ def main(argv=None) -> int:
         info = inspect(token)
         print(f"  valid for {info['days_left']} days")
 
-        missing = REQUIRED_SCOPES - info["scopes"]
+        missing = required_scopes(prof) - info["scopes"]
         if missing:
             print(f"\n  ! Token is missing: {', '.join(sorted(missing))}")
-            print("    Regenerate it in the Graph API Explorer with all four scopes")
+            print("    Regenerate it in the Graph API Explorer with every scope")
             print("    ticked, then run this again. Publishing will fail without them.")
+            if missing == {PAGE_SCOPE}:
+                print(f"    ({PAGE_SCOPE} is only for the Facebook Page mirror;")
+                print("     Instagram alone would be fine.)")
             return 1
         print(f"  scopes ok ({len(info['scopes'])} granted)")
 
