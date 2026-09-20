@@ -50,6 +50,7 @@ DEFAULTS = {
         "ig_access_token": "IG_ACCESS_TOKEN",
         "unsplash_access_key": "UNSPLASH_ACCESS_KEY",
         "pexels_api_key": "PEXELS_API_KEY",
+        "pixabay_api_key": "PIXABAY_API_KEY",
     },
     "publish": {
         "api": "facebook",

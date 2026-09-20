@@ -40,7 +40,10 @@
     "signature_opacity": 0.72
   },
   "background": {
-    "provider": "unsplash",
+    "provider": [
+      "unsplash",
+      "pexels"
+    ],
     "queries": [
       "misty forest",
       "mountain sunrise",

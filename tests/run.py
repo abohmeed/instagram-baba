@@ -224,6 +224,39 @@ def the_dedication_never_collides_with_the_verse():
     check(worst[1] > 0, f"{worst[0]} overlaps the dedication by {-worst[1]:.0f}px")
 
 
+# ----------------------------------------------------------------------- providers
+@test
+def a_provider_list_skips_sources_with_no_key():
+    import os
+
+    from src import background
+
+    prof = profile_mod.load("mahmoudelfakharany8")
+    prof.data["background"] = {**prof["background"],
+                               "provider": ["unsplash", "pexels", "pixabay"]}
+    saved = {k: os.environ.pop(k, None)
+             for k in ("UNSPLASH_ACCESS_KEY", "PEXELS_API_KEY", "PIXABAY_API_KEY")}
+    try:
+        background.collect(prof, 10, random.Random(1))
+    except RuntimeError as exc:
+        check("no API keys" in str(exc), f"should name the real problem: {exc}")
+    else:
+        check(False, "expected a clear error when no provider has a key")
+    finally:
+        for k, v in saved.items():
+            if v is not None:
+                os.environ[k] = v
+
+
+@test
+def every_provider_is_reachable_by_name():
+    from src import background
+
+    for name in ("unsplash", "pexels", "pixabay"):
+        check(name in background.PROVIDERS, f"{name} missing from PROVIDERS")
+        check(callable(background.PROVIDERS[name]), f"{name} is not callable")
+
+
 # -------------------------------------------------------------------------- library
 def _fake_manifest(n: int) -> dict:
     return {"profile": "t", "edition": 1, "count": n, "per_verse": 1,

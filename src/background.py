@@ -95,6 +95,42 @@ def _pexels(profile, query: str, rng: random.Random) -> tuple[Image.Image, dict]
     return image, credit
 
 
+def _pixabay(profile, query: str, rng: random.Random) -> tuple[Image.Image, dict]:
+    photos = _pixabay_search(profile, query, page=1, per_page=60)
+    if not photos:
+        raise BackgroundError(f"Pixabay returned no photos for {query!r}")
+    photo = rng.choice(photos)
+    return _download(photo["url"]), {
+        "provider": "pixabay", "query": query, "id": photo.get("id"),
+        "author": photo.get("author"), "author_url": photo.get("author_url"),
+        "link": photo.get("link"),
+    }
+
+
+def _pixabay_search(profile, query: str, page: int, per_page: int) -> list:
+    key = profile.secret("pixabay_api_key")
+    r = requests.get(
+        "https://pixabay.com/api/",
+        params={
+            "key": key, "q": query, "image_type": "photo", "safesearch": "true",
+            "per_page": min(max(per_page, 3), 200), "page": page,
+            "orientation": {"portrait": "vertical"}.get(
+                profile["background"].get("orientation", "squarish"), "horizontal"
+            ),
+        },
+        timeout=TIMEOUT,
+    )
+    r.raise_for_status()
+    return [
+        {"id": h.get("id"),
+         "url": h.get("largeImageURL") or h.get("webformatURL"),
+         "author": h.get("user"),
+         "author_url": f"https://pixabay.com/users/{h.get('user')}-{h.get('user_id')}/",
+         "link": h.get("pageURL"), "download_location": None}
+        for h in (r.json().get("hits") or [])
+    ]
+
+
 def _local(profile, rng: random.Random) -> tuple[Image.Image, dict]:
     folder = ROOT / profile["background"].get("fallback_dir", "assets/backgrounds")
     files = sorted(
@@ -159,9 +195,16 @@ def collect(profile, count: int, rng: random.Random | None = None) -> list:
     """
     rng = rng or random.Random()
     cfg = profile["background"]
-    provider = cfg.get("provider", "unsplash")
     queries = list(cfg.get("queries") or ["nature"])
     rng.shuffle(queries)
+
+    # provider may be a single name or a list. A list is about *variety*, not
+    # reliability: 300 photos from one stock library share a recognisable look,
+    # and mixing sources makes the grid read less templated.
+    providers = cfg.get("provider", "unsplash")
+    if isinstance(providers, list):
+        return _collect_many(profile, providers, count, queries, rng)
+    provider = providers
 
     if provider == "local":
         folder = ROOT / cfg.get("fallback_dir", "assets/backgrounds")
@@ -178,8 +221,9 @@ def collect(profile, count: int, rng: random.Random | None = None) -> list:
             for f in (files * (count // len(files) + 1))[:count]
         ]
 
-    per_page = 30 if provider == "unsplash" else 80
-    search = {"unsplash": _unsplash_search, "pexels": _pexels_search}.get(provider)
+    per_page = {"unsplash": 30, "pexels": 80, "pixabay": 200}.get(provider, 30)
+    search = {"unsplash": _unsplash_search, "pexels": _pexels_search,
+              "pixabay": _pixabay_search}.get(provider)
     if search is None:
         raise BackgroundError(f"Provider {provider!r} cannot be used for a bulk build")
 
@@ -222,6 +266,51 @@ def collect(profile, count: int, rng: random.Random | None = None) -> list:
     return found[:count]
 
 
+def _collect_many(profile, providers: list, count: int, queries: list,
+                  rng: random.Random) -> list:
+    """Split the target across several providers, skipping unusable ones."""
+    usable, skipped = [], []
+    for name in providers:
+        try:
+            if name != "local":
+                key = {"unsplash": "unsplash_access_key", "pexels": "pexels_api_key",
+                       "pixabay": "pixabay_api_key"}.get(name)
+                if key and not profile.secret(key, required=False):
+                    skipped.append(f"{name} (no key)")
+                    continue
+            usable.append(name)
+        except Exception as exc:  # noqa: BLE001
+            skipped.append(f"{name} ({exc})")
+
+    if skipped:
+        print(f"  skipping {', '.join(skipped)}")
+    if not usable:
+        raise BackgroundError(
+            f"None of {providers} is usable - no API keys are set for any of them."
+        )
+
+    share = -(-count // len(usable))  # ceil, so rounding never under-fills
+    collected, seen = [], set()
+    for name in usable:
+        sub = dict(profile.data)
+        sub["background"] = {**profile["background"], "provider": name}
+        try:
+            got = collect(type(profile)(sub), share, rng)
+        except Exception as exc:  # noqa: BLE001
+            print(f"  ! {name} produced nothing ({exc})")
+            continue
+        for photo in got:
+            marker = (photo.get("provider"), photo.get("id"))
+            if marker in seen:
+                continue
+            seen.add(marker)
+            collected.append(photo)
+        print(f"  {name}: {len(got)} photos")
+
+    rng.shuffle(collected)
+    return collected[:count]
+
+
 def download(photo: dict, profile=None) -> Image.Image:
     """Fetch one photo's pixels, and tell Unsplash it was used."""
     if photo.get("file"):
@@ -241,7 +330,7 @@ def download(photo: dict, profile=None) -> Image.Image:
     return image
 
 
-PROVIDERS = {"unsplash": _unsplash, "pexels": _pexels}
+PROVIDERS = {"unsplash": _unsplash, "pexels": _pexels, "pixabay": _pixabay}
 
 
 def fetch(profile, rng: random.Random | None = None) -> tuple[Image.Image, dict]:
