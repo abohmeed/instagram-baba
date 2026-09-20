@@ -143,6 +143,12 @@ def build(profile, per_verse: int = 1, rng: random.Random | None = None,
                     "author": photo.get("author"),
                     "author_url": photo.get("author_url"),
                     "link": photo.get("link"),
+                    # Kept so the library can be re-rendered later without the
+                    # stock API: CDN downloads aren't metered by the API key,
+                    # but recovering this URL from a photo id costs one API
+                    # call each, which for 310 images is worse than a rebuild.
+                    "url": photo.get("url"),
+                    "file": photo.get("file"),
                 },
             })
             if index % 25 == 0:
@@ -171,6 +177,59 @@ def build(profile, per_verse: int = 1, rng: random.Random | None = None,
     return data
 
 
+def rerender(profile, rng: random.Random | None = None) -> dict:
+    """Redraw every image on its existing background, with no stock API calls.
+
+    For text and layout changes - a new dedication line, a font tweak, an
+    edited caption - where the photographs should stay as they are. Downloads
+    come from the provider's CDN, which the API rate limit does not cover.
+    """
+    rng = rng or random.Random()
+    manifest = load(profile)
+    pool = {v["ref"]: v for v in content.load_pool(profile.pool_path)}
+
+    without_source = [i for i in manifest["items"]
+                      if not (i["background"].get("url") or i["background"].get("file"))]
+    if without_source:
+        raise RuntimeError(
+            f"{len(without_source)} of {len(manifest['items'])} entries predate "
+            f"background URLs being recorded, so they cannot be re-rendered "
+            f"without re-fetching from the API. Run a full --build instead; "
+            f"from then on --rerender will work."
+        )
+
+    print(f"Re-rendering {len(manifest['items'])} images on their existing backgrounds")
+    started, failures = time.time(), []
+    for n, item in enumerate(manifest["items"], 1):
+        verse = pool.get(item["ref"])
+        if verse is None:
+            failures.append(f"{item['ref']}: no longer in the pool")
+            continue
+        try:
+            image = background.download(item["background"], profile)
+            composed = render.compose(
+                profile, verse, image, caption_mod.reference_text(profile, verse)
+            )
+            render.save(composed, ROOT / item["file"])
+            item["caption"] = caption_mod.build(profile, verse, rng)
+        except Exception as exc:  # noqa: BLE001
+            failures.append(f"{item['ref']}: {exc}")
+            continue
+        if n % 25 == 0:
+            print(f"  {n}/{len(manifest['items'])} "
+                  f"({n / max(time.time() - started, 1):.1f}/s)")
+
+    manifest["rerendered_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    save(profile, manifest)
+    print(f"\nRe-rendered {len(manifest['items']) - len(failures)} images "
+          f"(edition {manifest['edition']} kept)")
+    if failures:
+        print(f"{len(failures)} failed:")
+        for f in failures[:10]:
+            print(f"  {f}")
+    return manifest
+
+
 def main(argv=None) -> int:
     import argparse
     from . import profile as profile_mod
@@ -178,6 +237,8 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description="Build or inspect the image library.")
     parser.add_argument("--profile")
     parser.add_argument("--build", action="store_true", help="render the library")
+    parser.add_argument("--rerender", action="store_true",
+                        help="redraw on the existing backgrounds (no stock API calls)")
     parser.add_argument("--per-verse", type=int, default=1,
                         help="images per verse (different backgrounds)")
     parser.add_argument("--status", action="store_true",
@@ -213,6 +274,10 @@ def main(argv=None) -> int:
                 build(prof, manifest.get("per_verse", 1), rng)
             else:
                 print("\nCycle still running - nothing to do.")
+        return 0
+
+    if args.rerender:
+        rerender(prof, rng)
         return 0
 
     if args.build:

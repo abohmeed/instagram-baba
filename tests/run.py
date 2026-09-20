@@ -268,6 +268,41 @@ def library_cycle_state_tracks_position():
 
 
 @test
+def rerender_refuses_when_backgrounds_cannot_be_recovered():
+    """Without a stored source URL a re-render would silently need 310 API calls."""
+    prof = profile_mod.load("mahmoudelfakharany8")
+    manifest = _fake_manifest(3)
+    for item in manifest["items"]:
+        item["background"] = {"provider": "unsplash", "id": "abc"}  # no url
+    original_load = library.load
+    library.load = lambda _p: manifest
+    try:
+        library.rerender(prof)
+    except RuntimeError as exc:
+        check("--build" in str(exc), f"should point at a full build: {exc}")
+    else:
+        check(False, "expected a RuntimeError when no background URL is stored")
+    finally:
+        library.load = original_load
+
+
+@test
+def a_built_library_records_its_background_urls():
+    """Guards the field that makes --rerender possible at all."""
+    prof = profile_mod.load("mahmoudelfakharany8")
+    path = library.manifest_path(prof)
+    if not path.exists():
+        return  # nothing built in this checkout
+    import json as _json
+    items = _json.loads(path.read_text("utf-8"))["items"]
+    missing = [i["id"] for i in items
+               if not (i["background"].get("url") or i["background"].get("file"))]
+    check(not missing,
+          f"{len(missing)}/{len(items)} library entries have no recoverable background; "
+          f"a text-only change would need a full rebuild")
+
+
+@test
 def library_reports_a_useful_error_when_missing():
     prof = profile_mod.load("example-english")
     try:
