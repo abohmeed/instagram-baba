@@ -62,6 +62,23 @@ DEFAULTS = {
 }
 
 
+def load_dotenv(path: Path | None = None) -> None:
+    """Read a local .env into os.environ without overwriting real env vars.
+
+    Convenience for running on your own machine; in CI the secrets arrive as
+    real environment variables and this file won't exist.
+    """
+    path = path or ROOT / ".env"
+    if not path.exists():
+        return
+    for line in path.read_text("utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip("'\""))
+
+
 def _merge(base: dict, override: dict) -> dict:
     out = dict(base)
     for key, value in override.items():

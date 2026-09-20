@@ -78,6 +78,10 @@ python -m src.main --profile mahmoudelfakharany8 --preview 6
 # Full pipeline, stopping short of Instagram
 python -m src.main --profile mahmoudelfakharany8 --force
 
+# One-time: trade a short-lived Meta token for a long-lived one and
+# discover the Instagram user ID behind your Facebook Page
+python -m src.credentials --profile mahmoudelfakharany8 --write-env
+
 # Check credentials and how long the token has left
 python -m src.main --profile mahmoudelfakharany8 --check-token
 
@@ -103,6 +107,7 @@ src/
   render.py            image composition, Arabic layout, balanced wrapping
   caption.py           caption from the profile's template
   publish.py           Instagram Graph API
+  credentials.py       one-time token exchange and account discovery
   safety.py            the Hell/punishment filter
   arabic.py            normalisation, numerals, waqf stripping
 state/<profile>/       posting history (committed, so it survives runners)

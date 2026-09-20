@@ -213,6 +213,7 @@ def main(argv=None) -> int:
     parser.add_argument("--check-token", action="store_true",
                         help="verify Instagram credentials and token lifetime")
     args = parser.parse_args(argv)
+    profile_mod.load_dotenv()
 
     try:
         prof = profile_mod.load(args.profile)
