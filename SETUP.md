@@ -243,23 +243,35 @@ anywhere, and pushes it straight into GitHub Actions secrets.
 ### Or stop refreshing entirely (recommended)
 
 A **System User** token issued from the Business Portfolio can be set never to
-expire, which removes this chore for good. Worth the fifteen minutes.
+expire, which removes this chore for good.
 
-1. <https://business.facebook.com/settings> → pick the portfolio that owns the
-   Page → **Users → System users → Add**
-2. Name it something like `quran-poster`, role **Admin**
-3. **Add assets** → Pages → select the Page → enable **Manage Page**
-4. **Add assets** → Instagram accounts → select the account → enable content
-   permissions
-5. **Generate new token** → pick the app → set expiry **Never** → tick
+1. <https://business.facebook.com/settings> → the portfolio that owns the Page
+2. **Accounts → Apps → Add → Connect an app ID** and pick your app. This is a
+   prerequisite: Meta refuses to create a system user until an app belongs to
+   the portfolio, and it transfers app ownership to the portfolio.
+3. **Users → System users → Add** — name it `quran-poster`, role **Employee**.
+   Employee is enough; Admin would grant business-wide control for no benefit.
+4. **Assign assets → Facebook Pages** → your Page → enable **Content** only.
+5. **Assign assets → Apps** → your app → enable **Develop app** only. Without
+   an app role the token wizard stops at "No permissions available".
+6. **Generate token** → select the app → expiry **Never** → tick
    `instagram_basic`, `instagram_content_publish`, `pages_show_list`,
    `pages_read_engagement`, `business_management`
-6. Put it in `IG_ACCESS_TOKEN`; `IG_USER_ID` does not change
+7. Copy it, then `./scripts/set-secret.sh IG_ACCESS_TOKEN` (reads the
+   clipboard, so the token never lands in a terminal or a transcript), and
+   `gh secret set IG_ACCESS_TOKEN --repo <owner>/<repo> --body "$IG_ACCESS_TOKEN"`
 
-Verify with `--check-token`: the token line should read `never`.
+`IG_USER_ID` does not change. Verify with `--check-token`; the token line
+should read `never expires`.
 
-Keep `token-check.yml` running afterwards — it then acts as a canary for the
-token being revoked rather than expiring.
+**You do not need to assign the Instagram account as an asset.** Meta greys
+those toggles out unless you log in to Instagram, which looks like a blocker —
+it isn't. Publishing reaches the account through the Page's
+`instagram_business_account` edge, so the Page grant alone is sufficient.
+Verified by creating a media container and leaving it unpublished.
+
+After switching, `token-check.yml` stops being a countdown and becomes a
+canary for the token being revoked. Keep it.
 
 ### Rotating the App Secret
 

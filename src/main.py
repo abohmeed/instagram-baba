@@ -115,9 +115,9 @@ def cmd_check_token(profile) -> int:
     print(f"  account  : @{info.get('username')} ({info.get('name')})")
     print(f"  ig_user  : {info.get('id')}")
     print(f"  media    : {info.get('media_count')}   followers: {info.get('followers_count')}")
-    print(f"  token    : {info.get('token_days_left')} days left")
-    print(f"  scopes   : {', '.join(info.get('token_scopes') or []) or 'unknown'}")
     days = info.get("token_days_left")
+    print(f"  token    : {'never expires' if days == 'never' else f'{days} days left'}")
+    print(f"  scopes   : {', '.join(info.get('token_scopes') or []) or 'unknown'}")
     if isinstance(days, (int, float)) and days < 14:
         print("\n  ! Token expires soon - refresh it (see SETUP.md, step 7).")
         return 1
