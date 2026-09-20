@@ -149,7 +149,16 @@ def cmd_run(profile, args) -> int:
         print("  not due yet - exiting quietly")
         return 0
 
-    manifest = library_mod.load(profile)
+    try:
+        manifest = library_mod.load(profile)
+    except RuntimeError as exc:
+        # Not an error worth failing the run over: the library simply hasn't
+        # been built yet. Failing here would email the owner once a day until
+        # it is, so say what's missing and exit cleanly.
+        print(f"  {exc}")
+        print("  Nothing to post yet - run the build-library workflow.")
+        return 0
+
     state = library_mod.cycle_state(profile, manifest, history)
     item = library_mod.choose(profile, manifest, history)
     print(f"  library: edition {manifest['edition']}, {state['size']} images, "

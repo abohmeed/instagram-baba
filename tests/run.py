@@ -254,6 +254,18 @@ def library_reports_a_useful_error_when_missing():
 
 
 @test
+def a_missing_library_does_not_fail_the_daily_run():
+    """The hourly job must not email the owner once a day before the first build."""
+    import argparse
+
+    from src import main as main_mod
+
+    prof = profile_mod.load("example-english")  # has no library
+    args = argparse.Namespace(live=False, force=True, push=False)
+    check(main_mod.cmd_run(prof, args) == 0, "a missing library must exit 0, not 1")
+
+
+@test
 def library_paths_land_under_docs():
     prof = profile_mod.load("mahmoudelfakharany8")
     directory = library.library_dir(prof)
