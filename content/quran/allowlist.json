@@ -1,132 +1,1257 @@
 {
-  "_comment": "Curated references for the posting pool. Text is NEVER typed here by hand - build_pool.py fetches the authoritative Uthmani text from the Quran.com API. Ranges like '88:17-20' are joined into one passage. Edit freely; re-run scripts/build_pool.py afterwards.",
+  "_comment": "Curated references for the posting pool. Text is NEVER typed here by hand - build_pool.py fetches the authoritative Uthmani text from the Quran.com API. Ranges like '88:17-20' are joined into one passage. Candidates were proposed by content/quran/discover.py (which scans all 6236 ayat and filters mechanically) and then reviewed one by one. Edit freely; re-run scripts build_pool.py afterwards.",
   "refs": [
-    {"ref": "94:1-6",   "theme": "ease"},
-    {"ref": "94:5-6",   "theme": "ease"},
-    {"ref": "65:3",     "theme": "trust"},
-    {"ref": "2:153",    "theme": "patience"},
-    {"ref": "13:28",    "theme": "peace"},
-    {"ref": "3:139",    "theme": "hope"},
-    {"ref": "2:156",    "theme": "patience"},
-    {"ref": "2:157",    "theme": "mercy"},
-    {"ref": "2:186",    "theme": "closeness"},
-    {"ref": "50:16",    "theme": "closeness"},
-    {"ref": "57:4",     "theme": "closeness"},
-    {"ref": "39:53",    "theme": "mercy"},
-    {"ref": "4:110",    "theme": "forgiveness"},
-    {"ref": "20:82",    "theme": "forgiveness"},
-    {"ref": "42:25",    "theme": "forgiveness"},
-    {"ref": "71:10",    "theme": "forgiveness"},
-    {"ref": "7:23",     "theme": "dua"},
-    {"ref": "21:87",    "theme": "dua"},
-    {"ref": "3:8",      "theme": "dua"},
-    {"ref": "18:10",    "theme": "dua"},
-    {"ref": "20:114",   "theme": "knowledge"},
-    {"ref": "20:25-28", "theme": "dua"},
-    {"ref": "25:74",    "theme": "dua"},
-    {"ref": "26:83",    "theme": "dua"},
-    {"ref": "28:24",    "theme": "dua"},
-    {"ref": "14:40",    "theme": "dua"},
-    {"ref": "14:41",    "theme": "parents"},
-    {"ref": "17:24",    "theme": "parents"},
-    {"ref": "46:15",    "theme": "parents"},
-    {"ref": "89:27-30", "theme": "soul"},
-    {"ref": "36:58",    "theme": "peace"},
-    {"ref": "13:24",    "theme": "peace"},
-    {"ref": "56:25-26", "theme": "peace"},
-    {"ref": "10:62",    "theme": "hope"},
-    {"ref": "41:30",    "theme": "hope"},
-    {"ref": "10:26",    "theme": "reward"},
-    {"ref": "93:1-5",   "theme": "hope"},
-    {"ref": "93:3-5",   "theme": "hope"},
-    {"ref": "108:1-3",  "theme": "hope"},
-    {"ref": "14:7",     "theme": "gratitude"},
-    {"ref": "16:18",    "theme": "gratitude"},
-    {"ref": "2:152",    "theme": "gratitude"},
-    {"ref": "51:22",    "theme": "provision"},
-    {"ref": "11:6",     "theme": "provision"},
-    {"ref": "29:60",    "theme": "provision"},
-    {"ref": "30:21",    "theme": "creation"},
-    {"ref": "30:22",    "theme": "creation"},
-    {"ref": "55:1-4",   "theme": "creation"},
-    {"ref": "50:7",     "theme": "creation"},
-    {"ref": "50:9-11",  "theme": "creation"},
-    {"ref": "78:6-7",   "theme": "creation"},
-    {"ref": "78:14-16", "theme": "creation"},
-    {"ref": "88:17-20", "theme": "creation"},
-    {"ref": "67:3",     "theme": "creation"},
-    {"ref": "3:190",    "theme": "creation"},
-    {"ref": "31:20",    "theme": "creation"},
-    {"ref": "16:13",    "theme": "creation"},
-    {"ref": "13:3",     "theme": "creation"},
-    {"ref": "6:99",     "theme": "creation"},
-    {"ref": "36:33-35", "theme": "creation"},
-    {"ref": "35:27",    "theme": "creation"},
-    {"ref": "24:43",    "theme": "creation"},
-    {"ref": "2:255",    "theme": "majesty"},
-    {"ref": "59:22",    "theme": "majesty"},
-    {"ref": "59:23",    "theme": "majesty"},
-    {"ref": "59:24",    "theme": "majesty"},
-    {"ref": "112:1-4",  "theme": "majesty"},
-    {"ref": "1:1-7",    "theme": "majesty"},
-    {"ref": "55:60",    "theme": "character"},
-    {"ref": "16:90",    "theme": "character"},
-    {"ref": "41:34",    "theme": "character"},
-    {"ref": "3:159",    "theme": "character"},
-    {"ref": "49:13",    "theme": "character"},
-    {"ref": "2:195",    "theme": "character"},
-    {"ref": "3:134",    "theme": "character"},
-    {"ref": "42:43",    "theme": "character"},
-    {"ref": "2:263",    "theme": "character"},
-    {"ref": "99:7",     "theme": "character"},
-    {"ref": "31:18-19", "theme": "character"},
-    {"ref": "17:53",    "theme": "character"},
-    {"ref": "49:12",    "theme": "character"},
-    {"ref": "9:51",     "theme": "trust"},
-    {"ref": "33:3",     "theme": "trust"},
-    {"ref": "3:160",    "theme": "trust"},
-    {"ref": "3:173",    "theme": "trust"},
-    {"ref": "12:87",    "theme": "hope"},
-    {"ref": "2:261",    "theme": "giving"},
-    {"ref": "2:274",    "theme": "giving"},
-    {"ref": "64:17",    "theme": "giving"},
-    {"ref": "103:1-3",  "theme": "wisdom"},
-    {"ref": "39:9",     "theme": "knowledge"},
-    {"ref": "58:11",    "theme": "knowledge"},
-    {"ref": "17:36",    "theme": "wisdom"},
-    {"ref": "2:286",    "theme": "mercy"},
-    {"ref": "6:54",     "theme": "mercy"},
-    {"ref": "15:49",    "theme": "mercy"},
-    {"ref": "5:16",     "theme": "guidance"},
-    {"ref": "22:46",    "theme": "wisdom"},
-    {"ref": "47:7",     "theme": "trust"},
-    {"ref": "8:29",     "theme": "guidance"},
-    {"ref": "65:2",     "theme": "trust"},
-    {"ref": "24:55",    "theme": "hope"},
-    {"ref": "76:8-9",   "theme": "giving"},
-    {"ref": "2:177",    "theme": "character"},
-    {"ref": "23:115-116","theme": "majesty"},
-    {"ref": "40:64",    "theme": "creation"},
-    {"ref": "7:55-56",  "theme": "dua"},
-    {"ref": "17:110",   "theme": "majesty"},
-    {"ref": "73:8",     "theme": "devotion"},
-    {"ref": "29:69",    "theme": "guidance"},
-    {"ref": "4:86",     "theme": "character"},
-    {"ref": "2:148",    "theme": "character"},
-    {"ref": "16:97",    "theme": "reward"},
-    {"ref": "19:96",    "theme": "mercy"},
-    {"ref": "30:60",    "theme": "patience"},
-    {"ref": "46:35",    "theme": "patience"},
-    {"ref": "70:5",     "theme": "patience"},
-    {"ref": "18:46",    "theme": "wisdom"},
-    {"ref": "57:20",    "theme": "wisdom"},
-    {"ref": "62:10",    "theme": "provision"},
-    {"ref": "6:162",    "theme": "devotion"},
-    {"ref": "51:56",    "theme": "devotion"},
-    {"ref": "2:222",    "theme": "character"},
-    {"ref": "3:92",     "theme": "giving"},
-    {"ref": "35:15",    "theme": "wisdom"},
-    {"ref": "31:27",    "theme": "majesty"},
-    {"ref": "18:109",   "theme": "majesty"}
+    {
+      "ref": "1:1-7",
+      "theme": "majesty"
+    },
+    {
+      "ref": "2:29",
+      "theme": "creation"
+    },
+    {
+      "ref": "2:37",
+      "theme": "mercy"
+    },
+    {
+      "ref": "2:117",
+      "theme": "creation"
+    },
+    {
+      "ref": "2:128",
+      "theme": "dua"
+    },
+    {
+      "ref": "2:148",
+      "theme": "character"
+    },
+    {
+      "ref": "2:152",
+      "theme": "gratitude"
+    },
+    {
+      "ref": "2:153",
+      "theme": "patience"
+    },
+    {
+      "ref": "2:156",
+      "theme": "patience"
+    },
+    {
+      "ref": "2:157",
+      "theme": "mercy"
+    },
+    {
+      "ref": "2:160",
+      "theme": "forgiveness"
+    },
+    {
+      "ref": "2:163",
+      "theme": "majesty"
+    },
+    {
+      "ref": "2:177",
+      "theme": "character"
+    },
+    {
+      "ref": "2:186",
+      "theme": "closeness"
+    },
+    {
+      "ref": "2:195",
+      "theme": "character"
+    },
+    {
+      "ref": "2:222",
+      "theme": "character"
+    },
+    {
+      "ref": "2:225",
+      "theme": "mercy"
+    },
+    {
+      "ref": "2:255",
+      "theme": "majesty"
+    },
+    {
+      "ref": "2:261",
+      "theme": "giving"
+    },
+    {
+      "ref": "2:263",
+      "theme": "character"
+    },
+    {
+      "ref": "2:272",
+      "theme": "character"
+    },
+    {
+      "ref": "2:274",
+      "theme": "giving"
+    },
+    {
+      "ref": "2:286",
+      "theme": "mercy"
+    },
+    {
+      "ref": "3:8",
+      "theme": "dua"
+    },
+    {
+      "ref": "3:29",
+      "theme": "majesty"
+    },
+    {
+      "ref": "3:92",
+      "theme": "giving"
+    },
+    {
+      "ref": "3:104",
+      "theme": "character"
+    },
+    {
+      "ref": "3:109",
+      "theme": "majesty"
+    },
+    {
+      "ref": "3:133",
+      "theme": "forgiveness"
+    },
+    {
+      "ref": "3:134",
+      "theme": "character"
+    },
+    {
+      "ref": "3:138",
+      "theme": "guidance"
+    },
+    {
+      "ref": "3:139",
+      "theme": "hope"
+    },
+    {
+      "ref": "3:159",
+      "theme": "character"
+    },
+    {
+      "ref": "3:160",
+      "theme": "trust"
+    },
+    {
+      "ref": "3:173",
+      "theme": "trust"
+    },
+    {
+      "ref": "3:189",
+      "theme": "majesty"
+    },
+    {
+      "ref": "3:190",
+      "theme": "creation"
+    },
+    {
+      "ref": "3:198",
+      "theme": "reward"
+    },
+    {
+      "ref": "3:200",
+      "theme": "patience"
+    },
+    {
+      "ref": "4:17",
+      "theme": "forgiveness"
+    },
+    {
+      "ref": "4:86",
+      "theme": "character"
+    },
+    {
+      "ref": "4:106",
+      "theme": "mercy"
+    },
+    {
+      "ref": "4:110",
+      "theme": "forgiveness"
+    },
+    {
+      "ref": "4:126",
+      "theme": "majesty"
+    },
+    {
+      "ref": "4:132",
+      "theme": "majesty"
+    },
+    {
+      "ref": "4:175",
+      "theme": "mercy"
+    },
+    {
+      "ref": "5:16",
+      "theme": "guidance"
+    },
+    {
+      "ref": "5:39",
+      "theme": "mercy"
+    },
+    {
+      "ref": "5:74",
+      "theme": "mercy"
+    },
+    {
+      "ref": "5:83",
+      "theme": "dua"
+    },
+    {
+      "ref": "5:85",
+      "theme": "reward"
+    },
+    {
+      "ref": "5:119",
+      "theme": "reward"
+    },
+    {
+      "ref": "5:120",
+      "theme": "majesty"
+    },
+    {
+      "ref": "6:54",
+      "theme": "mercy"
+    },
+    {
+      "ref": "6:97",
+      "theme": "creation"
+    },
+    {
+      "ref": "6:99",
+      "theme": "creation"
+    },
+    {
+      "ref": "6:101",
+      "theme": "creation"
+    },
+    {
+      "ref": "6:162",
+      "theme": "devotion"
+    },
+    {
+      "ref": "7:23",
+      "theme": "dua"
+    },
+    {
+      "ref": "7:55-56",
+      "theme": "dua"
+    },
+    {
+      "ref": "7:56",
+      "theme": "mercy"
+    },
+    {
+      "ref": "7:126",
+      "theme": "dua"
+    },
+    {
+      "ref": "7:128",
+      "theme": "patience"
+    },
+    {
+      "ref": "8:29",
+      "theme": "guidance"
+    },
+    {
+      "ref": "9:21",
+      "theme": "mercy"
+    },
+    {
+      "ref": "9:51",
+      "theme": "trust"
+    },
+    {
+      "ref": "9:104",
+      "theme": "mercy"
+    },
+    {
+      "ref": "9:118",
+      "theme": "forgiveness"
+    },
+    {
+      "ref": "10:3",
+      "theme": "majesty"
+    },
+    {
+      "ref": "10:5",
+      "theme": "creation"
+    },
+    {
+      "ref": "10:6",
+      "theme": "creation"
+    },
+    {
+      "ref": "10:9",
+      "theme": "guidance"
+    },
+    {
+      "ref": "10:25",
+      "theme": "hope"
+    },
+    {
+      "ref": "10:26",
+      "theme": "reward"
+    },
+    {
+      "ref": "10:57",
+      "theme": "guidance"
+    },
+    {
+      "ref": "10:62",
+      "theme": "hope"
+    },
+    {
+      "ref": "10:107",
+      "theme": "mercy"
+    },
+    {
+      "ref": "11:6",
+      "theme": "provision"
+    },
+    {
+      "ref": "11:41",
+      "theme": "mercy"
+    },
+    {
+      "ref": "11:90",
+      "theme": "mercy"
+    },
+    {
+      "ref": "11:108",
+      "theme": "hope"
+    },
+    {
+      "ref": "11:114",
+      "theme": "character"
+    },
+    {
+      "ref": "11:120",
+      "theme": "guidance"
+    },
+    {
+      "ref": "11:123",
+      "theme": "knowledge"
+    },
+    {
+      "ref": "12:53",
+      "theme": "mercy"
+    },
+    {
+      "ref": "12:87",
+      "theme": "hope"
+    },
+    {
+      "ref": "12:98",
+      "theme": "mercy"
+    },
+    {
+      "ref": "12:101",
+      "theme": "dua"
+    },
+    {
+      "ref": "12:111",
+      "theme": "guidance"
+    },
+    {
+      "ref": "13:2",
+      "theme": "creation"
+    },
+    {
+      "ref": "13:3",
+      "theme": "creation"
+    },
+    {
+      "ref": "13:4",
+      "theme": "creation"
+    },
+    {
+      "ref": "13:15",
+      "theme": "creation"
+    },
+    {
+      "ref": "13:24",
+      "theme": "peace"
+    },
+    {
+      "ref": "13:28",
+      "theme": "peace"
+    },
+    {
+      "ref": "14:7",
+      "theme": "gratitude"
+    },
+    {
+      "ref": "14:23",
+      "theme": "hope"
+    },
+    {
+      "ref": "14:32",
+      "theme": "creation"
+    },
+    {
+      "ref": "14:33",
+      "theme": "creation"
+    },
+    {
+      "ref": "14:37",
+      "theme": "dua"
+    },
+    {
+      "ref": "14:38",
+      "theme": "dua"
+    },
+    {
+      "ref": "14:40",
+      "theme": "dua"
+    },
+    {
+      "ref": "14:41",
+      "theme": "parents"
+    },
+    {
+      "ref": "15:19",
+      "theme": "creation"
+    },
+    {
+      "ref": "15:49",
+      "theme": "mercy"
+    },
+    {
+      "ref": "16:5",
+      "theme": "creation"
+    },
+    {
+      "ref": "16:11",
+      "theme": "creation"
+    },
+    {
+      "ref": "16:12",
+      "theme": "creation"
+    },
+    {
+      "ref": "16:13",
+      "theme": "creation"
+    },
+    {
+      "ref": "16:14",
+      "theme": "creation"
+    },
+    {
+      "ref": "16:18",
+      "theme": "gratitude"
+    },
+    {
+      "ref": "16:31",
+      "theme": "hope"
+    },
+    {
+      "ref": "16:64",
+      "theme": "guidance"
+    },
+    {
+      "ref": "16:68",
+      "theme": "creation"
+    },
+    {
+      "ref": "16:81",
+      "theme": "creation"
+    },
+    {
+      "ref": "16:90",
+      "theme": "character"
+    },
+    {
+      "ref": "16:97",
+      "theme": "reward"
+    },
+    {
+      "ref": "16:102",
+      "theme": "guidance"
+    },
+    {
+      "ref": "16:119",
+      "theme": "forgiveness"
+    },
+    {
+      "ref": "16:125",
+      "theme": "guidance"
+    },
+    {
+      "ref": "16:127",
+      "theme": "patience"
+    },
+    {
+      "ref": "17:9",
+      "theme": "guidance"
+    },
+    {
+      "ref": "17:24",
+      "theme": "parents"
+    },
+    {
+      "ref": "17:36",
+      "theme": "wisdom"
+    },
+    {
+      "ref": "17:37",
+      "theme": "character"
+    },
+    {
+      "ref": "17:44",
+      "theme": "creation"
+    },
+    {
+      "ref": "17:53",
+      "theme": "character"
+    },
+    {
+      "ref": "17:66",
+      "theme": "mercy"
+    },
+    {
+      "ref": "17:70",
+      "theme": "character"
+    },
+    {
+      "ref": "17:110",
+      "theme": "majesty"
+    },
+    {
+      "ref": "18:10",
+      "theme": "dua"
+    },
+    {
+      "ref": "18:24",
+      "theme": "closeness"
+    },
+    {
+      "ref": "18:46",
+      "theme": "wisdom"
+    },
+    {
+      "ref": "18:109",
+      "theme": "majesty"
+    },
+    {
+      "ref": "19:65",
+      "theme": "patience"
+    },
+    {
+      "ref": "19:96",
+      "theme": "mercy"
+    },
+    {
+      "ref": "20:6",
+      "theme": "majesty"
+    },
+    {
+      "ref": "20:25-28",
+      "theme": "dua"
+    },
+    {
+      "ref": "20:50",
+      "theme": "knowledge"
+    },
+    {
+      "ref": "20:54",
+      "theme": "creation"
+    },
+    {
+      "ref": "20:82",
+      "theme": "forgiveness"
+    },
+    {
+      "ref": "20:114",
+      "theme": "knowledge"
+    },
+    {
+      "ref": "20:130",
+      "theme": "patience"
+    },
+    {
+      "ref": "21:19",
+      "theme": "majesty"
+    },
+    {
+      "ref": "21:33",
+      "theme": "creation"
+    },
+    {
+      "ref": "21:79",
+      "theme": "character"
+    },
+    {
+      "ref": "21:84",
+      "theme": "hope"
+    },
+    {
+      "ref": "21:87",
+      "theme": "dua"
+    },
+    {
+      "ref": "22:16",
+      "theme": "guidance"
+    },
+    {
+      "ref": "22:37",
+      "theme": "mercy"
+    },
+    {
+      "ref": "22:46",
+      "theme": "wisdom"
+    },
+    {
+      "ref": "22:64",
+      "theme": "majesty"
+    },
+    {
+      "ref": "22:65",
+      "theme": "creation"
+    },
+    {
+      "ref": "23:115-116",
+      "theme": "majesty"
+    },
+    {
+      "ref": "24:22",
+      "theme": "mercy"
+    },
+    {
+      "ref": "24:41",
+      "theme": "creation"
+    },
+    {
+      "ref": "24:42",
+      "theme": "majesty"
+    },
+    {
+      "ref": "24:43",
+      "theme": "creation"
+    },
+    {
+      "ref": "24:46",
+      "theme": "guidance"
+    },
+    {
+      "ref": "24:55",
+      "theme": "hope"
+    },
+    {
+      "ref": "25:2",
+      "theme": "creation"
+    },
+    {
+      "ref": "25:6",
+      "theme": "majesty"
+    },
+    {
+      "ref": "25:10",
+      "theme": "hope"
+    },
+    {
+      "ref": "25:59",
+      "theme": "creation"
+    },
+    {
+      "ref": "25:63",
+      "theme": "majesty"
+    },
+    {
+      "ref": "25:70",
+      "theme": "forgiveness"
+    },
+    {
+      "ref": "25:74",
+      "theme": "dua"
+    },
+    {
+      "ref": "26:7",
+      "theme": "creation"
+    },
+    {
+      "ref": "26:51",
+      "theme": "forgiveness"
+    },
+    {
+      "ref": "26:83",
+      "theme": "dua"
+    },
+    {
+      "ref": "27:11",
+      "theme": "mercy"
+    },
+    {
+      "ref": "27:25",
+      "theme": "majesty"
+    },
+    {
+      "ref": "27:30",
+      "theme": "majesty"
+    },
+    {
+      "ref": "27:62",
+      "theme": "closeness"
+    },
+    {
+      "ref": "27:88",
+      "theme": "creation"
+    },
+    {
+      "ref": "28:16",
+      "theme": "forgiveness"
+    },
+    {
+      "ref": "28:24",
+      "theme": "dua"
+    },
+    {
+      "ref": "28:56",
+      "theme": "guidance"
+    },
+    {
+      "ref": "28:73",
+      "theme": "creation"
+    },
+    {
+      "ref": "28:80",
+      "theme": "patience"
+    },
+    {
+      "ref": "29:20",
+      "theme": "creation"
+    },
+    {
+      "ref": "29:44",
+      "theme": "creation"
+    },
+    {
+      "ref": "29:51",
+      "theme": "guidance"
+    },
+    {
+      "ref": "29:60",
+      "theme": "provision"
+    },
+    {
+      "ref": "29:69",
+      "theme": "guidance"
+    },
+    {
+      "ref": "30:18",
+      "theme": "majesty"
+    },
+    {
+      "ref": "30:21",
+      "theme": "creation"
+    },
+    {
+      "ref": "30:22",
+      "theme": "creation"
+    },
+    {
+      "ref": "30:26",
+      "theme": "majesty"
+    },
+    {
+      "ref": "30:27",
+      "theme": "creation"
+    },
+    {
+      "ref": "30:46",
+      "theme": "creation"
+    },
+    {
+      "ref": "30:60",
+      "theme": "patience"
+    },
+    {
+      "ref": "31:10",
+      "theme": "creation"
+    },
+    {
+      "ref": "31:16",
+      "theme": "character"
+    },
+    {
+      "ref": "31:17",
+      "theme": "patience"
+    },
+    {
+      "ref": "31:18-19",
+      "theme": "character"
+    },
+    {
+      "ref": "31:20",
+      "theme": "creation"
+    },
+    {
+      "ref": "31:26",
+      "theme": "majesty"
+    },
+    {
+      "ref": "31:27",
+      "theme": "majesty"
+    },
+    {
+      "ref": "31:29",
+      "theme": "creation"
+    },
+    {
+      "ref": "32:4",
+      "theme": "majesty"
+    },
+    {
+      "ref": "32:27",
+      "theme": "creation"
+    },
+    {
+      "ref": "33:3",
+      "theme": "trust"
+    },
+    {
+      "ref": "34:1",
+      "theme": "majesty"
+    },
+    {
+      "ref": "34:2",
+      "theme": "majesty"
+    },
+    {
+      "ref": "34:6",
+      "theme": "guidance"
+    },
+    {
+      "ref": "35:1",
+      "theme": "majesty"
+    },
+    {
+      "ref": "35:12",
+      "theme": "creation"
+    },
+    {
+      "ref": "35:15",
+      "theme": "wisdom"
+    },
+    {
+      "ref": "35:27",
+      "theme": "creation"
+    },
+    {
+      "ref": "35:28",
+      "theme": "gratitude"
+    },
+    {
+      "ref": "35:34",
+      "theme": "hope"
+    },
+    {
+      "ref": "35:38",
+      "theme": "majesty"
+    },
+    {
+      "ref": "36:33-35",
+      "theme": "creation"
+    },
+    {
+      "ref": "36:36",
+      "theme": "creation"
+    },
+    {
+      "ref": "36:40",
+      "theme": "creation"
+    },
+    {
+      "ref": "36:58",
+      "theme": "peace"
+    },
+    {
+      "ref": "36:81",
+      "theme": "creation"
+    },
+    {
+      "ref": "37:5",
+      "theme": "majesty"
+    },
+    {
+      "ref": "38:43",
+      "theme": "gratitude"
+    },
+    {
+      "ref": "38:66",
+      "theme": "majesty"
+    },
+    {
+      "ref": "39:5",
+      "theme": "creation"
+    },
+    {
+      "ref": "39:9",
+      "theme": "knowledge"
+    },
+    {
+      "ref": "39:21",
+      "theme": "creation"
+    },
+    {
+      "ref": "39:46",
+      "theme": "majesty"
+    },
+    {
+      "ref": "39:53",
+      "theme": "mercy"
+    },
+    {
+      "ref": "40:61",
+      "theme": "creation"
+    },
+    {
+      "ref": "40:64",
+      "theme": "creation"
+    },
+    {
+      "ref": "41:30",
+      "theme": "hope"
+    },
+    {
+      "ref": "41:34",
+      "theme": "character"
+    },
+    {
+      "ref": "41:39",
+      "theme": "creation"
+    },
+    {
+      "ref": "42:4",
+      "theme": "majesty"
+    },
+    {
+      "ref": "42:5",
+      "theme": "mercy"
+    },
+    {
+      "ref": "42:11",
+      "theme": "creation"
+    },
+    {
+      "ref": "42:12",
+      "theme": "majesty"
+    },
+    {
+      "ref": "42:23",
+      "theme": "forgiveness"
+    },
+    {
+      "ref": "42:25",
+      "theme": "forgiveness"
+    },
+    {
+      "ref": "42:30",
+      "theme": "character"
+    },
+    {
+      "ref": "42:43",
+      "theme": "character"
+    },
+    {
+      "ref": "42:49",
+      "theme": "majesty"
+    },
+    {
+      "ref": "42:53",
+      "theme": "majesty"
+    },
+    {
+      "ref": "43:12",
+      "theme": "creation"
+    },
+    {
+      "ref": "43:82",
+      "theme": "majesty"
+    },
+    {
+      "ref": "43:85",
+      "theme": "majesty"
+    },
+    {
+      "ref": "44:7",
+      "theme": "majesty"
+    },
+    {
+      "ref": "45:3",
+      "theme": "creation"
+    },
+    {
+      "ref": "45:5",
+      "theme": "creation"
+    },
+    {
+      "ref": "45:12",
+      "theme": "creation"
+    },
+    {
+      "ref": "45:13",
+      "theme": "creation"
+    },
+    {
+      "ref": "45:20",
+      "theme": "guidance"
+    },
+    {
+      "ref": "45:36",
+      "theme": "majesty"
+    },
+    {
+      "ref": "45:37",
+      "theme": "majesty"
+    },
+    {
+      "ref": "46:13",
+      "theme": "hope"
+    },
+    {
+      "ref": "46:15",
+      "theme": "parents"
+    },
+    {
+      "ref": "46:30",
+      "theme": "guidance"
+    },
+    {
+      "ref": "46:35",
+      "theme": "patience"
+    },
+    {
+      "ref": "47:7",
+      "theme": "trust"
+    },
+    {
+      "ref": "48:2",
+      "theme": "hope"
+    },
+    {
+      "ref": "48:4",
+      "theme": "hope"
+    },
+    {
+      "ref": "49:12",
+      "theme": "character"
+    },
+    {
+      "ref": "49:13",
+      "theme": "character"
+    },
+    {
+      "ref": "49:18",
+      "theme": "majesty"
+    },
+    {
+      "ref": "50:7",
+      "theme": "creation"
+    },
+    {
+      "ref": "50:9-11",
+      "theme": "creation"
+    },
+    {
+      "ref": "50:16",
+      "theme": "closeness"
+    },
+    {
+      "ref": "50:38",
+      "theme": "creation"
+    },
+    {
+      "ref": "50:39",
+      "theme": "patience"
+    },
+    {
+      "ref": "51:22",
+      "theme": "provision"
+    },
+    {
+      "ref": "51:56",
+      "theme": "devotion"
+    },
+    {
+      "ref": "54:12",
+      "theme": "creation"
+    },
+    {
+      "ref": "55:1-4",
+      "theme": "creation"
+    },
+    {
+      "ref": "55:29",
+      "theme": "majesty"
+    },
+    {
+      "ref": "55:60",
+      "theme": "character"
+    },
+    {
+      "ref": "56:25-26",
+      "theme": "peace"
+    },
+    {
+      "ref": "57:2",
+      "theme": "majesty"
+    },
+    {
+      "ref": "57:4",
+      "theme": "closeness"
+    },
+    {
+      "ref": "57:5",
+      "theme": "majesty"
+    },
+    {
+      "ref": "57:9",
+      "theme": "guidance"
+    },
+    {
+      "ref": "57:20",
+      "theme": "wisdom"
+    },
+    {
+      "ref": "57:28",
+      "theme": "mercy"
+    },
+    {
+      "ref": "58:11",
+      "theme": "knowledge"
+    },
+    {
+      "ref": "59:1",
+      "theme": "majesty"
+    },
+    {
+      "ref": "59:22",
+      "theme": "majesty"
+    },
+    {
+      "ref": "59:23",
+      "theme": "majesty"
+    },
+    {
+      "ref": "59:24",
+      "theme": "majesty"
+    },
+    {
+      "ref": "61:12",
+      "theme": "mercy"
+    },
+    {
+      "ref": "62:1",
+      "theme": "majesty"
+    },
+    {
+      "ref": "62:10",
+      "theme": "provision"
+    },
+    {
+      "ref": "64:1",
+      "theme": "majesty"
+    },
+    {
+      "ref": "64:3",
+      "theme": "creation"
+    },
+    {
+      "ref": "64:4",
+      "theme": "majesty"
+    },
+    {
+      "ref": "64:17",
+      "theme": "giving"
+    },
+    {
+      "ref": "65:2",
+      "theme": "trust"
+    },
+    {
+      "ref": "65:3",
+      "theme": "trust"
+    },
+    {
+      "ref": "67:3",
+      "theme": "creation"
+    },
+    {
+      "ref": "70:5",
+      "theme": "patience"
+    },
+    {
+      "ref": "71:10",
+      "theme": "forgiveness"
+    },
+    {
+      "ref": "71:16",
+      "theme": "creation"
+    },
+    {
+      "ref": "73:8",
+      "theme": "devotion"
+    },
+    {
+      "ref": "76:8-9",
+      "theme": "giving"
+    },
+    {
+      "ref": "78:6-7",
+      "theme": "creation"
+    },
+    {
+      "ref": "78:14-16",
+      "theme": "creation"
+    },
+    {
+      "ref": "88:17-20",
+      "theme": "creation"
+    },
+    {
+      "ref": "89:27-30",
+      "theme": "soul"
+    },
+    {
+      "ref": "93:1-5",
+      "theme": "hope"
+    },
+    {
+      "ref": "93:3-5",
+      "theme": "hope"
+    },
+    {
+      "ref": "94:1-6",
+      "theme": "ease"
+    },
+    {
+      "ref": "94:5-6",
+      "theme": "ease"
+    },
+    {
+      "ref": "98:8",
+      "theme": "reward"
+    },
+    {
+      "ref": "99:7",
+      "theme": "character"
+    },
+    {
+      "ref": "103:1-3",
+      "theme": "wisdom"
+    },
+    {
+      "ref": "108:1-3",
+      "theme": "hope"
+    },
+    {
+      "ref": "112:1-4",
+      "theme": "majesty"
+    }
   ]
 }

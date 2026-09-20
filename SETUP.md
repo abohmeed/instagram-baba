@@ -1,7 +1,8 @@
 # Setup
 
 One-time setup, in order. Steps 1–3 need no accounts beyond GitHub; steps 4–8
-are the Meta side, which is the fiddly part.
+are the Meta side, which is the fiddly part; steps 9–10 build the image library
+and switch it on.
 
 Meta redesigns its developer console regularly, so the screen names below may
 drift. The API facts — scope names, endpoints, token lifetimes — are stable;
@@ -31,11 +32,13 @@ that is plenty. Apply for production only if you want more headroom.
 Prefer Pexels? Get a key at <https://www.pexels.com/api/> and set
 `background.provider` to `"pexels"` in the profile.
 
-## 3. Add fallback backgrounds (recommended)
+## 3. Add fallback backgrounds (optional)
 
-Drop a few nature photos into `assets/backgrounds/`. They are used only when
-the stock API fails, so a post is never skipped. See the README in that folder
-for the licensing rule.
+Drop a few nature photos into `assets/backgrounds/`, and the library can be
+built from them with no stock API at all (`"provider": "local"` in the
+profile). Less critical than it sounds: because every image is rendered up
+front, a stock API outage can never cost you a post — it can only delay a
+rebuild. See the README in that folder for the licensing rule.
 
 ---
 
@@ -157,19 +160,51 @@ optional — without it the schedule still varies daily, just predictably.
 
 ---
 
-## 9. Dry run, then go live
+## 9. Build the image library
 
-Render six samples in CI without posting anything:
+This is the one-time render of every image the account will post. It needs the
+Unsplash key from step 2 and takes roughly 15–25 minutes for ~310 images.
 
-**Actions → preview → Run workflow**, profile `mahmoudelfakharany8`, count `6`.
-Download the artifact and look at the images and captions.
+**Actions → build library → Run workflow**, profile `mahmoudelfakharany8`,
+`per_verse` `1`, and tick **force** (the first build has no cycle to wait for).
 
-Then a single real post, on demand:
+It commits `docs/library/mahmoudelfakharany8/` and the manifest.
+
+Then **review it**. Browse `docs/library/mahmoudelfakharany8/` on GitHub — the
+filenames carry the reference, so `0117-25_70.jpg` is 25:70. Anything you
+don't want: remove the reference from `content/quran/allowlist.json`, re-run
+`build_pool.py`, and rebuild.
+
+To build locally instead:
+
+```bash
+export UNSPLASH_ACCESS_KEY="..."
+python -m src.library --profile mahmoudelfakharany8 --build
+git add docs/library state && git commit -m "library: edition 1" && git push
+```
+
+`--per-verse 2` renders each verse twice on different backgrounds, doubling
+the library and the repo size.
+
+## 10. Dry run, then go live
+
+A dry run picks tomorrow's entry and prints it without posting:
+
+```bash
+python -m src.main --profile mahmoudelfakharany8 --force
+```
+
+Then one real post, on demand:
 
 **Actions → daily post → Run workflow**, tick **live** and **force**.
 
 Once you're happy, do nothing — the hourly schedule is already running, and it
 posts once a day at a random time between 09:00 and 21:00 Cairo.
+
+```bash
+# any time, to see where the cycle is
+python -m src.main --profile mahmoudelfakharany8 --status
+```
 
 ### Optional: browsable archive
 
@@ -211,3 +246,6 @@ Update the `IG_ACCESS_TOKEN` secret with the result. Takes a minute.
 | Container stuck at `IN_PROGRESS` | Usually a slow image fetch. The runner retries for ~2 minutes before giving up. |
 | `Application request limit reached` | Content publishing is capped at 50 posts per 24h. One a day is nowhere near it. |
 | Nothing posts, workflow is green | Expected: most hourly runs exit early because the random target time hasn't arrived. Look for the run near the target time in the logs. |
+| `No library for <profile>` | The library hasn't been built, or the build didn't get committed. See step 9. |
+| `... is in the manifest but missing on disk` | The manifest and `docs/library/` are out of sync — rebuild. |
+| Library build stops early with a rate-limit error | Unsplash Demo mode allows 50 API calls/hour. The bulk build uses far fewer, but applying for production access (free, at your app's page) raises it to 5000/hour. |

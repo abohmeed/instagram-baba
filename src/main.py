@@ -19,8 +19,8 @@ from pathlib import Path
 
 import requests
 
-from . import background, caption as caption_mod, content, profile as profile_mod
-from . import publish as publish_mod, render, schedule
+from . import background, caption as caption_mod, content, library as library_mod
+from . import profile as profile_mod, publish as publish_mod, render, schedule
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -125,9 +125,14 @@ def cmd_check_token(profile) -> int:
 
 
 def cmd_run(profile, args) -> int:
+    """Post one entry from the pre-rendered library.
+
+    Deliberately does no rendering and calls no stock-photo API: the image was
+    built, reviewed and pushed weeks ago, so the daily critical path is a
+    manifest lookup and two Graph API calls.
+    """
     live = args.live or _env_flag("LIVE")
-    mode = "LIVE" if live else "DRY RUN"
-    print(f"Profile: {profile.name}   [{mode}]")
+    print(f"Profile: {profile.name}   [{'LIVE' if live else 'DRY RUN'}]")
 
     due, now, target = schedule.is_due(profile)
     local_date = now.date().isoformat()
@@ -137,65 +142,67 @@ def cmd_run(profile, args) -> int:
     history = content.load_history(profile.state_path)
     already = content.posted_on(history, local_date)
     if already and not args.force:
-        print(f"  already posted today: {already['ref']} -> {already.get('permalink', '')}")
+        print(f"  already posted today: {already['ref']} {already.get('permalink', '')}")
         return 0
 
     if not due and not args.force:
         print("  not due yet - exiting quietly")
         return 0
 
-    pool = content.load_pool(profile.pool_path)
-    rng = random.Random()
-    item = content.choose(pool, history, rng)
-    print(f"  verse  : {item['ref']}  {item.get('surah_name', '')}  ({item.get('theme', '')})")
+    manifest = library_mod.load(profile)
+    state = library_mod.cycle_state(profile, manifest, history)
+    item = library_mod.choose(profile, manifest, history)
+    print(f"  library: edition {manifest['edition']}, {state['size']} images, "
+          f"{state['remaining']} left in this cycle")
+    print(f"  picked : #{item['id']}  {item['ref']}  {item.get('surah_name', '')}")
 
-    # A dry run stays out of docs/, which is the published archive.
-    out_dir = profile.posts_dir if live else ROOT / "out" / profile.name
-    out_path = out_dir / f"{local_date}-{item['ref'].replace(':', '_')}.jpg"
-    credit = render_one(profile, item, rng, out_path)
+    image_path = ROOT / item["file"]
+    if not image_path.exists():
+        print(f"  ! {item['file']} is in the manifest but missing on disk.")
+        print(f"    Rebuild: python -m src.library --profile {profile.name} --build")
+        return 1
 
-    text = caption_mod.build(profile, item, rng)
+    try:
+        image_url = profile.public_url_for(image_path)
+    except RuntimeError as exc:
+        if live:
+            raise
+        # A local dry run has no GITHUB_REPOSITORY; that only matters when posting.
+        image_url = f"<{exc}>"
+    print(f"  url    : {image_url}")
     print("\n--- caption ---")
-    print(text)
+    print(item["caption"])
     print("---------------\n")
 
     if not live:
-        preview = ROOT / "out" / profile.name / f"{local_date}-caption.txt"
-        preview.parent.mkdir(parents=True, exist_ok=True)
-        preview.write_text(text, "utf-8")
         print("Dry run: nothing posted. Pass --live (or set LIVE=true) to publish.")
         return 0
 
-    entry = {
-        "date": local_date,
-        "ref": item["ref"],
-        "theme": item.get("theme", ""),
-        "image": str(out_path.relative_to(ROOT)),
-        "background": credit,
-        "status": "pending",
-    }
-
-    if args.push:
-        message = f"post({profile.name}): {local_date} {item['ref']}"
-        if not push_to_repo([out_path], message):
-            print("  ! could not publish the image to the repo; aborting")
-            return 1
-
-    image_url = profile.public_url_for(out_path)
-    print(f"  url    : {image_url}")
-    if args.push and not wait_for_url(image_url):
-        print("  ! image URL never became reachable; aborting before Instagram sees it")
+    if not wait_for_url(image_url, attempts=5, delay=4):
+        print("  ! the image URL is not reachable; is the repo public and pushed?")
         return 1
 
-    result = publish_mod.post(profile, image_url, text)
-    entry.update(status="posted", url=image_url, **result)
+    result = publish_mod.post(profile, image_url, item["caption"])
     print(f"  posted : {result.get('permalink') or result['media_id']}")
 
-    content.record(history, entry)
+    content.record(history, {
+        "date": local_date,
+        "library_id": item["id"],
+        "ref": item["ref"],
+        "theme": item.get("theme", ""),
+        "image": item["file"],
+        "url": image_url,
+        "status": "posted",
+        **result,
+    })
     content.save_history(profile.state_path, history)
 
     if args.push:
-        push_to_repo([profile.state_path], f"state({profile.name}): {local_date} posted")
+        push_to_repo([profile.state_path], f"state({profile.name}): {local_date} {item['ref']}")
+
+    if state["remaining"] <= 1:
+        print("\n  This was the last image in the cycle. The next build-library run "
+              "will re-render with fresh backgrounds.")
     return 0
 
 
@@ -212,6 +219,8 @@ def main(argv=None) -> int:
     parser.add_argument("--seed", type=int, default=None, help="RNG seed for --preview")
     parser.add_argument("--check-token", action="store_true",
                         help="verify Instagram credentials and token lifetime")
+    parser.add_argument("--status", action="store_true",
+                        help="show library size and cycle position, then exit")
     args = parser.parse_args(argv)
     profile_mod.load_dotenv()
 
@@ -224,6 +233,8 @@ def main(argv=None) -> int:
     try:
         if args.check_token:
             return cmd_check_token(prof)
+        if args.status:
+            return library_mod.main(["--profile", prof.name, "--status"])
         if args.preview:
             return cmd_preview(prof, args)
         return cmd_run(prof, args)

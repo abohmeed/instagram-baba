@@ -13,7 +13,8 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from src import caption, content, profile as profile_mod, render, safety, schedule  # noqa: E402
+from src import caption, content, library, profile as profile_mod  # noqa: E402
+from src import render, safety, schedule  # noqa: E402
 from src.arabic import normalise, to_arabic_digits  # noqa: E402
 
 RESULTS = []
@@ -62,7 +63,7 @@ def normalise_folds_forms():
 def pool_is_clean():
     prof = profile_mod.load("mahmoudelfakharany8")
     pool = content.load_pool(prof.pool_path)
-    check(len(pool) >= 50, f"pool is suspiciously small: {len(pool)}")
+    check(len(pool) >= 250, f"pool is suspiciously small: {len(pool)}")
 
     seen = set()
     for item in pool:
@@ -198,6 +199,68 @@ def long_text_still_fits_the_canvas():
     check(font.size >= cfg["min_font_size"], "font shrank below the floor")
 
 
+# -------------------------------------------------------------------------- library
+def _fake_manifest(n: int) -> dict:
+    return {"profile": "t", "edition": 1, "count": n, "per_verse": 1,
+            "items": [{"id": f"{i:04d}", "ref": f"1:{i}", "file": f"f{i}.jpg",
+                       "caption": "c"} for i in range(1, n + 1)]}
+
+
+@test
+def library_cycle_visits_every_image_once():
+    prof = profile_mod.load("mahmoudelfakharany8")
+    manifest = _fake_manifest(20)
+    history = {"posts": []}
+    rng = random.Random(11)
+
+    picked = []
+    for _ in range(20):
+        item = library.choose(prof, manifest, history, rng)
+        picked.append(item["id"])
+        content.record(history, {"library_id": item["id"], "ref": item["ref"],
+                                 "status": "posted", "date": "d"})
+    check(len(set(picked)) == 20, f"repeated within a cycle: {sorted(picked)}")
+
+    state = library.cycle_state(prof, manifest, history)
+    check(state["complete"], f"cycle should be complete: {state}")
+    check(state["remaining"] == 20, f"remaining should reset: {state}")
+
+    # Next pick starts cycle 2 rather than running dry.
+    nxt = library.choose(prof, manifest, history, rng)
+    check(nxt["id"] in {i["id"] for i in manifest["items"]}, "cycle did not restart")
+
+
+@test
+def library_cycle_state_tracks_position():
+    prof = profile_mod.load("mahmoudelfakharany8")
+    manifest = _fake_manifest(10)
+    history = {"posts": [{"library_id": f"{i:04d}", "ref": "1:1", "status": "posted",
+                          "date": "d"} for i in range(1, 4)]}
+    state = library.cycle_state(prof, manifest, history)
+    check(state["used_in_cycle"] == 3, state)
+    check(state["remaining"] == 7, state)
+    check(not state["complete"], state)
+
+
+@test
+def library_reports_a_useful_error_when_missing():
+    prof = profile_mod.load("example-english")
+    try:
+        library.load(prof)
+    except RuntimeError as exc:
+        check("--build" in str(exc), f"error should say how to fix it: {exc}")
+    else:
+        check(False, "expected a RuntimeError for a missing library")
+
+
+@test
+def library_paths_land_under_docs():
+    prof = profile_mod.load("mahmoudelfakharany8")
+    directory = library.library_dir(prof)
+    check(directory.name == prof.name, directory)
+    check("docs/library" in str(directory), directory)
+
+
 # -------------------------------------------------------------------------- profile
 @test
 def profiles_are_valid():
@@ -219,9 +282,9 @@ def public_urls_point_at_the_repo():
     os.environ["GITHUB_REPOSITORY"] = "someone/instagram-baba"
     os.environ["GITHUB_REF_NAME"] = "main"
     prof = profile_mod.load("mahmoudelfakharany8")
-    url = prof.public_url_for(prof.posts_dir / "2026-01-01-2_255.jpg")
+    url = prof.public_url_for(library.library_dir(prof) / "0001-2_255.jpg")
     check(url.startswith("https://raw.githubusercontent.com/someone/instagram-baba/main/"), url)
-    check(url.endswith("docs/posts/mahmoudelfakharany8/2026-01-01-2_255.jpg"), url)
+    check(url.endswith("docs/library/mahmoudelfakharany8/0001-2_255.jpg"), url)
 
 
 def main() -> int:

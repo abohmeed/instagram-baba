@@ -28,6 +28,37 @@ BLOCK_TERMS = [
     "فاخذناهم", "اخذ عزيز مقتدر", "بطش", "البطشه", "شديد المحال",
 ]
 
+# Not about punishment, but not suitable as a standalone inspirational post:
+# legal rulings, battle narrative, polemic, or anything that needs the
+# surrounding passage to be read fairly. Used by discover.py when proposing new
+# candidates; the curated allowlist can still include one deliberately.
+CONTEXT_TERMS = [
+    # war and conflict
+    "قتال", "قتلوا", "يقتلون", "فاقتلوا", "الحرب", "جهاد", "نفروا", "الصف",
+    "غزو", "اسري", "غنمتم", "الانفال", "اسلحتهم", "زحفا", "هزموهم",
+    # legal / ritual minutiae
+    "طلقتم", "الطلاق", "عدتهن", "المحيض", "ايلاء", "الميراث", "يوصيكم",
+    "فريضه", "الزاني", "الزانيه", "جلده", "السارق", "السارقه", "القصاص",
+    "الربا", "الخمر", "الميسر", "الانصاب", "الازلام", "تيمموا", "الجزيه",
+    "نكحتم", "فانكحوا", "المطلقات", "ظاهر", "الايمن", "كفاره",
+    # polemic and named groups
+    "اليهود", "النصاري", "المنافقون", "المنافقين", "المشركون", "اهل الكتاب",
+    "الاعراب", "بني اسراييل", "السامري", "ابي لهب",
+    # narrative that needs its story
+    "فرعون", "هامان", "قارون", "ثمود", "عاد", "مدين", "الايكه", "تبع",
+    "النمل", "الهدهد", "سبا", "ياجوج", "ماجوج", "الرقيم", "طالوت", "جالوت",
+    "ابرهه", "الفيل", "بدر", "حنين", "احد",
+    # claims about disbelief/hypocrisy that read badly alone
+    "لا يومنون", "كذبوا", "المكذبين", "يصدون", "استهزي", "سخروا",
+    "الذين كفروا", "كفروا", "يشركون", "شركاء", "انداد", "من دون الله",
+    "تدعون من دون", "اوثن", "اصنام", "يجحدون", "يفترون", "زعمتم",
+    # pronouns with no antecedent in a standalone post
+    "اوليك", "هولاء", "بعضهم", "فريق منهم", "منهم من", "فيهم",
+    # rhetorical challenges aimed at an audience the post doesn't have
+    "فاني يوفكون", "افمن", "ام من", "يسلونك", "زعم", "بزعمهم",
+]
+
+
 # Soft flag: legitimate in context but worth a human glance before it goes live.
 FLAG_TERMS = [
     "حميم",      # a close friend (41:34) - but also scalding water elsewhere
@@ -72,6 +103,11 @@ def _hits(text: str, terms) -> list:
 def check(text: str) -> dict:
     """Return {'blocked': [...], 'flagged': [...]} for a passage."""
     return {"blocked": _hits(text, BLOCK_TERMS), "flagged": _hits(text, FLAG_TERMS)}
+
+
+def needs_context(text: str) -> list:
+    """Terms suggesting the passage can't stand alone as a post."""
+    return _hits(text, CONTEXT_TERMS)
 
 
 def is_safe(text: str) -> bool:

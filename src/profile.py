@@ -57,6 +57,7 @@ DEFAULTS = {
         "url_mode": "raw",
         "base_url": "auto",
         "posts_dir": "docs/posts",
+        "library_dir": "docs/library",
         "keep_archive": True,
     },
 }

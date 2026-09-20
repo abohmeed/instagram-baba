@@ -1,0 +1,99 @@
+name: build library
+
+# Renders every image the account will post, in one go, and commits them.
+# The daily job then never renders anything - it posts an image that has been
+# public and reviewed for weeks.
+#
+# Runs monthly, but by default only rebuilds once the current cycle has
+# actually finished (with ~310 images at one a day, that's roughly every ten
+# months). Use the manual run with force to rebuild sooner.
+on:
+  schedule:
+    - cron: "0 3 1 * *"
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Profile to build"
+        required: true
+        default: "mahmoudelfakharany8"
+      per_verse:
+        description: "Images per verse (different backgrounds each)"
+        required: false
+        default: "1"
+      force:
+        description: "Rebuild now, even mid-cycle"
+        type: boolean
+        default: false
+
+concurrency:
+  group: build-library
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        profile:
+          - mahmoudelfakharany8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Skip profiles not selected by a manual run
+        id: gate
+        run: |
+          wanted="${{ github.event.inputs.profile }}"
+          if [ -n "$wanted" ] && [ "$wanted" != "${{ matrix.profile }}" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build
+        if: steps.gate.outputs.run == 'true'
+        env:
+          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: |
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            python -m src.library --profile "${{ matrix.profile }}" --build \
+              --per-verse "${{ github.event.inputs.per_verse || 1 }}"
+          else
+            python -m src.library --profile "${{ matrix.profile }}" \
+              --rebuild-if-complete \
+              --per-verse "${{ github.event.inputs.per_verse || 1 }}"
+          fi
+
+      - name: Commit the library
+        if: steps.gate.outputs.run == 'true'
+        run: |
+          git config user.name "${GIT_USER_NAME:-quran-poster-bot}"
+          git config user.email "${GIT_USER_EMAIL:-actions@users.noreply.github.com}"
+          git add -A docs/library state
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+            exit 0
+          fi
+          git commit -m "library(${{ matrix.profile }}): rebuild"
+          for i in 1 2 3; do
+            git push && break
+            git pull --rebase
+          done
+
+      - name: Summary
+        if: steps.gate.outputs.run == 'true'
+        run: python -m src.library --profile "${{ matrix.profile }}" --status

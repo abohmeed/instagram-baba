@@ -11,20 +11,30 @@ in `profiles/*.json`, so the same code runs any number of Instagram accounts,
 in any language, from any content pack. See [Running another account](#running-another-account).
 
 ```
-                 curated refs          Quran.com API
-                      │                      │
-                      └──────► build_pool ◄──┘
-                                   │
-   stock photo API ──┐             ▼
-                     ├──────► render ──► docs/posts/<profile>/<date>.jpg
-   local fallback  ──┘             │              │
-                                   │              ├──► git push (public URL)
-                      caption ◄────┘              │
-                                   │              ▼
-                                   └────────► Graph API ──► Instagram
+ONCE  ─────────────────────────────────────────────────────────────────────
+  allowlist ─┐                      ┌─ stock photo API
+             ├─► build_pool ─┐      │
+  Quran.com ─┘               ├─► build library ─► docs/library/<profile>/*.jpg
+                             │                    state/<profile>/library.json
+        safety filter ───────┘                              │
+                                                     git commit (public)
+
+DAILY ─────────────────────────────────────────────────────────────────────
+  hourly cron ─► due? ─► pick unused entry ─► Graph API ─► Instagram
+                          (no rendering, no photo API, no push)
 ```
 
 ## How it runs
+
+**Every image is rendered up front, once, and committed.** `build-library`
+renders one image per verse — currently ~310 — fetches a distinct background
+for each, and pushes the lot. The daily job never renders anything.
+
+That's the important design choice. The daily critical path is a manifest
+lookup and two Graph API calls: no stock-photo API to be down, no fonts to
+install, no git push to race, and nothing to go wrong at 6pm that you'd only
+notice the next morning. It also means you can look at all 310 images before
+the first one is posted.
 
 GitHub Actions runs `daily-post` **every hour**. Each run derives one
 unpredictable target time for the day from `SHA256(profile | date | salt)`,
@@ -34,18 +44,27 @@ time exit in about a second; the first run at or after it posts.
 Deriving rather than storing the target means all 24 runs agree without any
 shared state, and the time is different every day and different per account.
 
-The finished image is committed to the repo and served from
-`raw.githubusercontent.com` — Instagram needs a public HTTPS URL, and raw
-serves a file the instant it's pushed, whereas GitHub Pages can lag a minute
-or two behind. `docs/` doubles as a browsable archive if you enable Pages.
+Selection walks the library in a random order and never repeats until every
+image has been posted — about ten months at one a day. When the cycle
+completes, the monthly `build-library` run re-renders everything with fresh
+backgrounds, so the second pass through the same verses doesn't look like the
+first. A rebuild replaces the previous edition's files rather than adding to
+them, so the working tree holds exactly one library.
+
+Images are served from `raw.githubusercontent.com`, which needs the repo to be
+public. `docs/` doubles as a browsable archive if you enable Pages.
 
 ## Content safety
 
 The account is a memorial, so the tone matters more than the variety.
 
-1. **A curated allowlist.** `content/quran/allowlist.json` lists ~127 references
-   by hand — mercy, patience, gratitude, creation, du'a. Nothing else is ever
-   eligible.
+1. **A curated allowlist.** `content/quran/allowlist.json` lists 313 references
+   — mercy, patience, gratitude, creation, du'a. Nothing else is ever eligible.
+   Candidates were *proposed* by `content/quran/discover.py`, which reads all
+   6,236 ayat and narrows them mechanically (safety filter, then a
+   needs-context filter for legal rulings, battle narrative and polemic, then a
+   length window, then theme ranking). Every proposal was then reviewed by
+   hand before it entered the list — the scanner suggests, it never decides.
 2. **A keyword filter over the fetched text.** `src/safety.py` blocks any
    passage mentioning the Fire, punishment, or divine wrath, and catches a
    mistaken reference before it reaches the pool. Over-blocking is the safe
@@ -55,10 +74,10 @@ The account is a memorial, so the tone matters more than the variety.
    passage and every rejection with its reason. Read it once; re-read it
    whenever you edit the allowlist.
 
-Three references from the allowlist are currently rejected by the filter, all
-correctly: **14:7** and **57:20** mention عَذَاب, and **Al-Fatiha** contains
-ٱلْمَغْضُوبِ عَلَيْهِمْ. Al-Fatiha is a judgement call — if you want it, add
-`"الفاتحه"`-adjacent handling or remove `المغضوب` from the block list knowingly.
+Of 313 references, 310 make it through. The three rejections are all correct:
+**14:7** and **57:20** mention عَذَاب, and **Al-Fatiha** contains
+ٱلْمَغْضُوبِ عَلَيْهِمْ. Al-Fatiha is a judgement call — if you want it,
+remove `المغضوب` from the block list knowingly.
 
 **Quranic text is never typed by hand in this repo.** `build_pool.py` fetches
 it from the Quran.com API (Uthmani/Hafs), with alquran.cloud as a fallback.
@@ -72,10 +91,19 @@ python -m venv .venv && .venv/bin/pip install -r requirements.txt
 # Rebuild the verse pool after editing the allowlist
 python content/quran/build_pool.py
 
-# Render six samples; posts nothing, writes to out/
+# Propose new verses to add to the allowlist (writes nothing)
+python content/quran/discover.py --limit 300
+
+# Build the image library - one image per verse. Do this once.
+python -m src.library --profile mahmoudelfakharany8 --build
+
+# Where the cycle is, and how long until it recycles
+python -m src.library --profile mahmoudelfakharany8 --status
+
+# Render six throwaway samples to iterate on the design
 python -m src.main --profile mahmoudelfakharany8 --preview 6
 
-# Full pipeline, stopping short of Instagram
+# Pick tomorrow's post from the library, stopping short of Instagram
 python -m src.main --profile mahmoudelfakharany8 --force
 
 # One-time: trade a short-lived Meta token for a long-lived one and
@@ -99,19 +127,21 @@ Posting is opt-in: without `--live` (or `LIVE=true`) nothing reaches Instagram.
 profiles/              one JSON per Instagram account — everything tunable
 content/quran/         allowlist, build script, generated pool, review file
 content/quotes/        a second pack, to show the pipeline isn't Quran-specific
+content/quran/discover.py   scans all 6236 ayat to propose new candidates
 src/
-  main.py              orchestration and CLI
+  main.py              the daily job: pick from the library and post
+  library.py           builds the library, tracks the cycle
   schedule.py          the derived random daily posting time
-  content.py           pool loading, non-repeating selection
-  background.py        Unsplash / Pexels / local, with fallback
+  content.py           pool loading, history
+  background.py        Unsplash / Pexels / local, single and bulk
   render.py            image composition, Arabic layout, balanced wrapping
   caption.py           caption from the profile's template
   publish.py           Instagram Graph API
   credentials.py       one-time token exchange and account discovery
-  safety.py            the Hell/punishment filter
+  safety.py            the Hell/punishment and needs-context filters
   arabic.py            normalisation, numerals, waqf stripping
-state/<profile>/       posting history (committed, so it survives runners)
-docs/posts/<profile>/  every image posted
+state/<profile>/       library.json (the manifest) and history.json
+docs/library/<profile>/ every image, rendered up front
 ```
 
 ## Running another account
@@ -145,7 +175,11 @@ different language, direction, aspect ratio, provider and content pack.
   doesn't.
 - **Waqf marks** (`ۖ ۚ`) are stripped from the artwork but kept in the caption.
   They're recitation aids, and they strand awkwardly at line breaks.
-- **Selection** never repeats a passage until the whole pool has been through,
-  then starts a fresh cycle. A failed post doesn't consume its verse.
+- **Selection** never repeats an image until the whole library has been
+  through, then starts a fresh cycle. A failed post doesn't consume its entry,
+  because history only records what actually published.
+- **Bulk background fetching** uses the providers' *search* endpoints with
+  paging — 30–80 photos per request — so building 310 images costs a handful
+  of API calls rather than 310, and stays inside the free tier.
 
 Setup instructions: [SETUP.md](SETUP.md).

@@ -3,6 +3,8 @@ name: daily post
 on:
   # Runs hourly. Each run asks src/schedule.py whether this profile's randomly
   # chosen moment for today has arrived; almost every run exits in a second.
+  # No rendering and no stock-photo API here - the image comes from the
+  # pre-built library (see build-library.yml).
   schedule:
     - cron: "5 * * * *"
   workflow_dispatch:
@@ -68,19 +70,10 @@ jobs:
           # One entry per secret name referenced in profiles/*.json.
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
-          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
-          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: |
           python -m src.main --profile "${{ matrix.profile }}" \
             ${{ github.event.inputs.force == 'true' && '--force' || '' }}
 
-      - name: Keep the rendered image even if posting failed
+      - name: Library status
         if: always() && steps.gate.outputs.run == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: render-${{ matrix.profile }}-${{ github.run_id }}
-          path: |
-            docs/posts/${{ matrix.profile }}/
-            out/${{ matrix.profile }}/
-          if-no-files-found: ignore
-          retention-days: 14
+        run: python -m src.library --profile "${{ matrix.profile }}" --status || true

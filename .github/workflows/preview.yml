@@ -1,7 +1,8 @@
 name: preview
 
-# Renders sample images without posting anything, and attaches them to the run
-# so you can review the look before going live.
+# Renders throwaway sample images to iterate on the *design* (fonts, overlay,
+# spacing) without touching the real library. For reviewing what will actually
+# be posted, look at docs/library/<profile>/ after build-library has run.
 on:
   workflow_dispatch:
     inputs:
