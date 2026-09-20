@@ -20,6 +20,63 @@ class BackgroundError(RuntimeError):
     pass
 
 
+# Stock search is keyword-matched, not subject-matched: "olive trees" on Pexels
+# returns a bowl of olive dip. A plate of food under a verse is the kind of
+# mistake nobody notices until it is on the account, so reject on the caption
+# metadata both providers return. Over-rejecting is cheap - there are tens of
+# thousands of landscapes behind these queries.
+OFF_SUBJECT = [
+    # food and drink
+    "food", "plate", "bowl", "dish", "meal", "salad", "bread", "cheese", "sauce",
+    "dip", "snack", "breakfast", "lunch", "dinner", "restaurant", "kitchen",
+    "coffee", "drink", "cocktail", "wine", "fruit bowl", "cuisine", "recipe",
+    # people as the subject
+    "woman", "women", "man ", "men ", "girl", "boy", "portrait", "selfie",
+    "model", "couple", "family", "child", "baby", "person holding", "face",
+    "posing", "smiling", "wedding", "bride", "groom", "party",
+    # interiors, urban and tech
+    "indoor", "interior", "room", "office", "desk", "laptop", "computer",
+    "phone", "keyboard", "chair", "sofa", "bedroom", "bathroom", "shop",
+    "store", "market", "car", "vehicle", "traffic", "street", "highway",
+    "road ", "parking", "building", "skyscraper", "construction", "factory",
+    # religious imagery of other traditions, and anything figurative
+    "church", "cathedral", "temple", "statue", "sculpture", "painting",
+    "graffiti", "tattoo",
+    # grim imagery, which is the last thing a memorial account should carry
+    "skull", "skeleton", "bones", "bone ", "dead", "death", "grave",
+    "cemetery", "tomb", "coffin", "funeral", "carcass", "decay", "rotting",
+]
+
+
+# A blocklist only catches what a caption happens to mention - a photo of a
+# concrete street described as "urban architecture" slips through every term
+# above. So when a description exists, also require positive evidence that the
+# subject is the natural world.
+ON_SUBJECT = [
+    "forest", "tree", "wood", "jungle", "pine", "palm", "olive",
+    "mountain", "hill", "valley", "cliff", "canyon", "rock", "peak", "summit",
+    "sky", "cloud", "sunset", "sunrise", "dusk", "dawn", "star", "moon",
+    "sea", "ocean", "lake", "river", "stream", "waterfall", "water", "wave",
+    "beach", "shore", "coast", "island",
+    "desert", "sand", "dune", "field", "meadow", "grass", "prairie", "steppe",
+    "flower", "bloom", "blossom", "leaf", "leaves", "foliage", "garden",
+    "snow", "ice", "glacier", "rain", "mist", "fog", "haze", "storm",
+    "landscape", "nature", "natural", "scenery", "scenic", "horizon",
+    "autumn", "spring", "summer", "winter", "wilderness", "countryside",
+    "path", "trail", "hillside", "plant", "moss", "fern", "reed",
+]
+
+
+def _is_on_subject(text: str) -> bool:
+    """Judge a photo by its own description: is the subject the natural world?"""
+    if not text:
+        return True  # nothing to judge by; the query already steered it
+    lowered = f" {text.lower()} "
+    if any(term in lowered for term in OFF_SUBJECT):
+        return False
+    return any(term in lowered for term in ON_SUBJECT)
+
+
 def _download(url: str, headers: dict | None = None) -> Image.Image:
     r = requests.get(url, headers=headers or {}, timeout=TIMEOUT)
     r.raise_for_status()
@@ -128,6 +185,7 @@ def _pixabay_search(profile, query: str, page: int, per_page: int) -> list:
          "author_url": f"https://pixabay.com/users/{h.get('user')}-{h.get('user_id')}/",
          "link": h.get("pageURL"), "download_location": None}
         for h in (r.json().get("hits") or [])
+        if _is_on_subject(h.get("tags"))
     ]
 
 
@@ -181,8 +239,9 @@ def _pexels_search(profile, query: str, page: int, per_page: int) -> list:
     return [
         {"id": p.get("id"), "url": p["src"]["large2x"], "author": p.get("photographer"),
          "author_url": p.get("photographer_url"), "link": p.get("url"),
-         "download_location": None}
+         "download_location": None, "alt": p.get("alt")}
         for p in (r.json().get("photos") or [])
+        if _is_on_subject(p.get("alt"))
     ]
 
 
@@ -239,6 +298,12 @@ def collect(profile, count: int, rng: random.Random | None = None) -> list:
                 continue
             for photo in results:
                 if provider == "unsplash":
+                    described = " ".join(filter(None, [
+                        photo.get("description"), photo.get("alt_description"),
+                        " ".join(t.get("title", "") for t in (photo.get("tags") or [])),
+                    ]))
+                    if not _is_on_subject(described):
+                        continue
                     photo = {
                         "id": photo.get("id"),
                         "url": (photo.get("urls") or {}).get("regular"),
@@ -289,23 +354,41 @@ def _collect_many(profile, providers: list, count: int, queries: list,
             f"None of {providers} is usable - no API keys are set for any of them."
         )
 
-    share = -(-count // len(usable))  # ceil, so rounding never under-fills
-    collected, seen = [], set()
-    for name in usable:
+    collected, seen, working = [], set(), []
+
+    def take(name: str, want: int) -> int:
         sub = dict(profile.data)
         sub["background"] = {**profile["background"], "provider": name}
         try:
-            got = collect(type(profile)(sub), share, rng)
+            got = collect(type(profile)(sub), want, rng)
         except Exception as exc:  # noqa: BLE001
-            print(f"  ! {name} produced nothing ({exc})")
-            continue
+            print(f"  ! {name} produced nothing ({str(exc)[:120]})")
+            return 0
+        added = 0
         for photo in got:
             marker = (photo.get("provider"), photo.get("id"))
             if marker in seen:
                 continue
             seen.add(marker)
             collected.append(photo)
-        print(f"  {name}: {len(got)} photos")
+            added += 1
+        return added
+
+    share = -(-count // len(usable))  # ceil, so rounding never under-fills
+    for name in usable:
+        added = take(name, share)
+        print(f"  {name}: {added} photos")
+        if added:
+            working.append(name)
+
+    # A provider that is down or rate-limited would otherwise leave the library
+    # short and force backgrounds to repeat. Top up from whatever did work.
+    for name in working:
+        if len(collected) >= count:
+            break
+        shortfall = count - len(collected)
+        print(f"  topping up {shortfall} from {name}")
+        take(name, shortfall + len(seen))
 
     rng.shuffle(collected)
     return collected[:count]

@@ -21,7 +21,7 @@ PACK = Path(__file__).resolve().parent
 ROOT = PACK.parents[1]
 sys.path.insert(0, str(ROOT))
 
-from src.safety import check  # noqa: E402
+from src.safety import check, needs_context  # noqa: E402
 
 QURAN_API = "https://api.quran.com/api/v4"
 FALLBACK_API = "https://api.alquran.cloud/v1"
@@ -100,6 +100,7 @@ def main() -> int:
         time.sleep(0.15)
 
     pool, rejected, flagged = [], [], []
+    needs_review = []
     seen = set()
 
     for entry in refs:
@@ -158,6 +159,12 @@ def main() -> int:
         pool.append(record)
         if verdict["flagged"]:
             flagged.append((ref, ", ".join(verdict["flagged"])))
+        # Reported, never auto-rejected: the match is substring-based, so it
+        # catches اتَّبَعَ as تبع and Al-Ikhlas's أَحَدٌ as the battle of Uhud.
+        # Losing those would be worse than the problem. A human reads the list.
+        context = needs_context(plain)
+        if context:
+            needs_review.append((ref, ", ".join(context)))
 
     pool.sort(key=lambda r: (r["surah"], r["ayah_start"]))
 
@@ -190,6 +197,12 @@ def main() -> int:
         lines += [f"{ref:<10} contains: {terms}" for ref, terms in flagged]
         lines.append("")
 
+    if needs_review:
+        lines += ["", "READ THESE IN FULL - they may need their surrounding passage",
+                  "(mostly false positives from substring matching; check anyway)", "-" * 70]
+        lines += [f"{ref:<10} contains: {terms}" for ref, terms in needs_review]
+        lines.append("")
+
     if rejected:
         lines += ["", "REJECTED (not in the pool)", "-" * 70]
         lines += [f"{ref:<10} {why}" for ref, why in rejected]
@@ -201,6 +214,7 @@ def main() -> int:
     print(f"Accepted : {len(pool)}")
     print(f"Rejected : {len(rejected)}")
     print(f"Flagged  : {len(flagged)}")
+    print(f"Context  : {len(needs_review)} to read in full (see pool_review.txt)")
     print()
     print("Wrote content/quran/verses.json and content/quran/pool_review.txt")
     if rejected:
