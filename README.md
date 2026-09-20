@@ -113,6 +113,10 @@ python -m src.credentials --profile mahmoudelfakharany8 --write-env
 # Check credentials and how long the token has left
 python -m src.main --profile mahmoudelfakharany8 --check-token
 
+# Renew the 60-day token in place (no browser) and push it to GitHub
+python -m src.credentials --profile mahmoudelfakharany8 \
+    --refresh --write-env --set-github-secret <owner>/<repo>
+
 # Post for real
 python -m src.main --profile mahmoudelfakharany8 --live --force
 

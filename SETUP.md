@@ -227,19 +227,56 @@ image posted. The bot doesn't depend on this; it reads from
 break the streak. `.github/workflows/token-check.yml` runs every Monday and
 fails the workflow — which emails you — once fewer than 14 days remain.
 
-To refresh, re-run the exchange with the *current* long-lived token:
+### Refreshing (60-day cycle)
+
+A long-lived token can be traded for a fresh 60-day one right up until it
+expires. No browser, no re-consent — the clock just restarts:
 
 ```bash
-curl -s "https://graph.facebook.com/v21.0/oauth/access_token\
-?grant_type=fb_exchange_token\
-&client_id=$APP_ID\
-&client_secret=$APP_SECRET\
-&fb_exchange_token=$CURRENT_LONG_LIVED_TOKEN"
+python -m src.credentials --profile mahmoudelfakharany8 \
+    --refresh --write-env --set-github-secret <owner>/<repo>
 ```
 
-Update the `IG_ACCESS_TOKEN` secret with the result. Takes a minute.
+It verifies the new token still carries all the scopes before writing it
+anywhere, and pushes it straight into GitHub Actions secrets.
 
----
+### Or stop refreshing entirely (recommended)
+
+A **System User** token issued from the Business Portfolio can be set never to
+expire, which removes this chore for good. Worth the fifteen minutes.
+
+1. <https://business.facebook.com/settings> → pick the portfolio that owns the
+   Page → **Users → System users → Add**
+2. Name it something like `quran-poster`, role **Admin**
+3. **Add assets** → Pages → select the Page → enable **Manage Page**
+4. **Add assets** → Instagram accounts → select the account → enable content
+   permissions
+5. **Generate new token** → pick the app → set expiry **Never** → tick
+   `instagram_basic`, `instagram_content_publish`, `pages_show_list`,
+   `pages_read_engagement`, `business_management`
+6. Put it in `IG_ACCESS_TOKEN`; `IG_USER_ID` does not change
+
+Verify with `--check-token`: the token line should read `never`.
+
+Keep `token-check.yml` running afterwards — it then acts as a canary for the
+token being revoked rather than expiring.
+
+### Rotating the App Secret
+
+The App Secret is only used to *mint* tokens, and it lives in your local
+`.env` — it is **not** a GitHub Actions secret, so rotating it does not touch
+the posting schedule.
+
+1. <https://developers.facebook.com/apps> → your app → **App settings → Basic**
+2. **App Secret → Reset**
+3. Update `META_APP_SECRET` in `.env`
+4. Immediately confirm tokens still work:
+   `python -m src.credentials --profile <name> --refresh`
+
+If that refresh fails after a reset, mint a fresh token from the Graph API
+Explorer as in step 7 — the account and `IG_USER_ID` are unaffected either way.
+Do the reset at a time when you can follow it with the verification, not
+just before going away.
 
 ## Troubleshooting
 

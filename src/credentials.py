@@ -100,6 +100,83 @@ def find_instagram_accounts(token: str) -> list:
     return found
 
 
+def _refresh(args, prof) -> int:
+    """Renew a long-lived token in place - no Graph API Explorer round trip.
+
+    A long-lived token can be exchanged for a fresh 60-day one right up until
+    it expires, so this needs no browser and no re-consent. Run it any time
+    before the deadline; the clock restarts from the day you run it.
+    """
+    import subprocess
+
+    current = os.environ.get(
+        (prof["secrets"]["ig_access_token"] if prof else "IG_ACCESS_TOKEN"), ""
+    ).strip()
+    if not current:
+        print("error: no current token in the environment or .env", file=sys.stderr)
+        return 2
+
+    app_id = args.app_id or os.environ.get("META_APP_ID", "")
+    app_secret = args.app_secret or os.environ.get("META_APP_SECRET", "")
+    if not (app_id and app_secret):
+        app_id = app_id or input("Meta App ID: ").strip()
+        app_secret = app_secret or getpass.getpass("Meta App Secret: ").strip()
+
+    before = inspect(current)
+    print(f"Current token: {before['days_left']} days left")
+
+    try:
+        token = exchange(app_id, app_secret, current)
+    except SetupError as exc:
+        print(f"\nerror: {exc}", file=sys.stderr)
+        print("If the token has already expired, or the app secret was reset since it\n"
+              "was issued, generate a new one instead:\n"
+              "  python -m src.credentials --profile <name> --write-env", file=sys.stderr)
+        return 1
+
+    after = inspect(token)
+    print(f"New token    : {after['days_left']} days left")
+
+    missing = REQUIRED_SCOPES - after["scopes"]
+    if missing:
+        print(f"\n  ! The refreshed token is missing: {', '.join(sorted(missing))}")
+        return 1
+
+    if args.write_env:
+        env_path = Path(profile_mod.ROOT) / ".env"
+        existing = {}
+        if env_path.exists():
+            for line in env_path.read_text("utf-8").splitlines():
+                if "=" in line and not line.strip().startswith("#"):
+                    k, v = line.split("=", 1)
+                    existing[k.strip()] = v.strip()
+        existing[prof["secrets"]["ig_access_token"] if prof else "IG_ACCESS_TOKEN"] = token
+        env_path.write_text(
+            "\n".join(f"{k}={v}" for k, v in sorted(existing.items())) + "\n", "utf-8"
+        )
+        env_path.chmod(0o600)
+        print(f"Wrote {env_path.name}")
+
+    name = prof["secrets"]["ig_access_token"] if prof else "IG_ACCESS_TOKEN"
+    if args.set_github_secret:
+        result = subprocess.run(
+            ["gh", "secret", "set", name, "--repo", args.set_github_secret,
+             "--body", token],
+            capture_output=True, text=True,
+        )
+        if result.returncode != 0:
+            print(f"\n  ! gh secret set failed: {result.stderr.strip()}", file=sys.stderr)
+            print(f"  Set it by hand:\n    gh secret set {name} "
+                  f"--repo {args.set_github_secret} --body '<token>'", file=sys.stderr)
+            return 1
+        print(f"Updated {name} in {args.set_github_secret}")
+    else:
+        print(f"\nNow update the GitHub secret:\n"
+              f"  gh secret set {name} --repo <owner>/<repo> --body '<the new token>'\n"
+              f"or rerun with --set-github-secret <owner>/<repo>.")
+    return 0
+
+
 def main(argv=None) -> int:
     # Must happen before the parser is built: argparse evaluates its defaults
     # from os.environ at construction time.
@@ -115,6 +192,12 @@ def main(argv=None) -> int:
                         help="short-lived User token from the Graph API Explorer")
     parser.add_argument("--write-env", action="store_true",
                         help="also write the secrets to a gitignored .env for local runs")
+    parser.add_argument("--refresh", action="store_true",
+                        help="renew the CURRENT long-lived token for another 60 days "
+                             "(no browser step; uses IG_ACCESS_TOKEN from the env/.env)")
+    parser.add_argument("--set-github-secret", metavar="OWNER/REPO",
+                        help="push the refreshed token straight to that repo's "
+                             "Actions secrets with gh")
     args = parser.parse_args(argv)
 
     prof = None
@@ -124,6 +207,9 @@ def main(argv=None) -> int:
         except RuntimeError as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 2
+
+    if args.refresh:
+        return _refresh(args, prof)
 
     app_id = args.app_id or input("Meta App ID: ").strip()
     app_secret = args.app_secret or getpass.getpass("Meta App Secret: ").strip()
