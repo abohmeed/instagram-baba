@@ -156,7 +156,7 @@ The helper in step 7 prints these as `gh secret set` commands, or add them at
 
 | Secret | Value |
 |---|---|
-| `IG_USER_ID` | the 17-digit Instagram user ID (for this account: `17841452423103838`) |
+| `IG_USER_ID` | the 17-digit Instagram user ID |
 | `IG_ACCESS_TOKEN` | the long-lived token |
 | `UNSPLASH_ACCESS_KEY` | your Unsplash Access Key |
 | `SCHEDULE_SALT` | any random string, e.g. `openssl rand -hex 16` |
