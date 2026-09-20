@@ -30,6 +30,10 @@ REQUIRED_SCOPES = {
     "instagram_content_publish",
     "pages_show_list",
     "pages_read_engagement",
+    # Pages owned by a Business Portfolio (the New Pages Experience) do not
+    # appear on /me/accounts without this, and the failure is silent: every
+    # other scope reads as granted and the Pages list simply comes back empty.
+    "business_management",
 }
 
 
@@ -97,6 +101,10 @@ def find_instagram_accounts(token: str) -> list:
 
 
 def main(argv=None) -> int:
+    # Must happen before the parser is built: argparse evaluates its defaults
+    # from os.environ at construction time.
+    profile_mod.load_dotenv()
+
     parser = argparse.ArgumentParser(
         description="Exchange a short-lived token and discover the Instagram user ID."
     )
@@ -108,7 +116,6 @@ def main(argv=None) -> int:
     parser.add_argument("--write-env", action="store_true",
                         help="also write the secrets to a gitignored .env for local runs")
     args = parser.parse_args(argv)
-    profile_mod.load_dotenv()
 
     prof = None
     if args.profile:
@@ -143,8 +150,14 @@ def main(argv=None) -> int:
         accounts = find_instagram_accounts(token)
         if not accounts:
             print("\n  ! No Page has a linked Instagram account.")
-            print("    In the Instagram app: Settings -> Accounts Centre -> Connected")
-            print("    experiences -> Accounts, and add the Facebook Page. Then rerun.")
+            print("    Two things cause this:")
+            print("    1. The Page is owned by a Business Portfolio and the token is")
+            print("       missing business_management - add it in the Graph API Explorer")
+            print("       and regenerate. /me/accounts comes back empty rather than")
+            print("       erroring, so this looks like a missing Page.")
+            print("    2. The Page really isn't linked to the Instagram account. In the")
+            print("       Instagram app: Settings -> Accounts Centre -> Connected")
+            print("       experiences -> Accounts, and add the Facebook Page.")
             return 1
 
         for acc in accounts:

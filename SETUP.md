@@ -51,7 +51,7 @@ with `publish.api`:
 |---|---|---|
 | Host | `graph.facebook.com` | `graph.instagram.com` |
 | Facebook Page required | Yes | No |
-| Scopes | `instagram_basic`, `instagram_content_publish`, `pages_show_list`, `pages_read_engagement` | `instagram_business_basic`, `instagram_business_content_publish` |
+| Scopes | `instagram_basic`, `instagram_content_publish`, `pages_show_list`, `pages_read_engagement`, `business_management` | `instagram_business_basic`, `instagram_business_content_publish` |
 | Docs and community answers | Plentiful | Fewer |
 
 **@mahmoudelfakharany8 has a Facebook Page, so it uses Facebook Login** — which
@@ -90,9 +90,15 @@ Open the **Graph API Explorer**
 (<https://developers.facebook.com/tools/explorer/>):
 
 1. Select your app, then **User Token**.
-2. Tick these four permissions:
+2. Tick these five permissions:
    `instagram_basic`, `instagram_content_publish`, `pages_show_list`,
-   `pages_read_engagement`.
+   `pages_read_engagement`, `business_management`.
+
+   **`business_management` is not optional if your Page belongs to a Business
+   Portfolio**, which it does by default for anything created in recent years.
+   Without it, `/me/accounts` returns an empty list instead of an error — every
+   other scope reads as granted and it looks as though you have no Pages at
+   all. This cost us half an hour; don't skip it.
 3. **Generate Access Token** and approve. That token is short-lived (~1 hour) —
    that's fine, the next command trades it in.
 
@@ -150,7 +156,7 @@ The helper in step 7 prints these as `gh secret set` commands, or add them at
 
 | Secret | Value |
 |---|---|
-| `IG_USER_ID` | the 17-digit Instagram user ID |
+| `IG_USER_ID` | the 17-digit Instagram user ID (for this account: `17841452423103838`) |
 | `IG_ACCESS_TOKEN` | the long-lived token |
 | `UNSPLASH_ACCESS_KEY` | your Unsplash Access Key |
 | `SCHEDULE_SALT` | any random string, e.g. `openssl rand -hex 16` |
@@ -242,6 +248,7 @@ Update the `IG_ACCESS_TOKEN` secret with the result. Takes a minute.
 | `(#200) Requires instagram_content_publish permission` | Scope missing from the token. Regenerate with all four scopes. |
 | `Unsupported get request ... object does not exist` on `IG_USER_ID` | You used the Page ID or the handle. It must be `instagram_business_account.id`. |
 | `The user is not an Instagram Business` | Account is still Personal, or not linked to the Page. |
+| `No Page has a linked Instagram account`, but you *do* have a Page | Almost always a missing `business_management` scope — a Business Portfolio Page is invisible to `/me/accounts` without it, and the call succeeds with an empty list rather than failing. Add the scope, regenerate, rerun. Check the Page is ticked under **Facebook Settings → Business Integrations → your app → View and edit**. |
 | `Media ID is not available` | Instagram couldn't fetch the image URL. The repo must be public, and the push must have landed — the run logs print the URL; open it. |
 | Container stuck at `IN_PROGRESS` | Usually a slow image fetch. The runner retries for ~2 minutes before giving up. |
 | `Application request limit reached` | Content publishing is capped at 50 posts per 24h. One a day is nowhere near it. |
