@@ -1,0 +1,32 @@
+{
+  "source": "Public-domain quotations",
+  "generated_by": "hand-written sample pack",
+  "note": "Demonstrates that the pipeline is not Quran-specific. A pack is just a JSON list; each record needs `ref` and `text`, and any other field is available to the caption template.",
+  "count": 6,
+  "verses": [
+    {"ref": "aurelius-1", "surah_name": "Marcus Aurelius", "ayah_start": 1, "ayah_end": 1,
+     "theme": "stillness", "chars": 74,
+     "text": "Nowhere can a man find a quieter or more untroubled retreat than in his own soul.",
+     "text_plain": "Nowhere can a man find a quieter or more untroubled retreat than in his own soul."},
+    {"ref": "aurelius-2", "surah_name": "Marcus Aurelius", "ayah_start": 2, "ayah_end": 2,
+     "theme": "acceptance", "chars": 62,
+     "text": "Accept the things to which fate binds you, and love the people with whom fate brings you together.",
+     "text_plain": "Accept the things to which fate binds you, and love the people with whom fate brings you together."},
+    {"ref": "seneca-1", "surah_name": "Seneca", "ayah_start": 1, "ayah_end": 1,
+     "theme": "time", "chars": 56,
+     "text": "We suffer more often in imagination than in reality.",
+     "text_plain": "We suffer more often in imagination than in reality."},
+    {"ref": "thoreau-1", "surah_name": "Henry David Thoreau", "ayah_start": 1, "ayah_end": 1,
+     "theme": "nature", "chars": 58,
+     "text": "In wildness is the preservation of the world.",
+     "text_plain": "In wildness is the preservation of the world."},
+    {"ref": "eliot-1", "surah_name": "George Eliot", "ayah_start": 1, "ayah_end": 1,
+     "theme": "hope", "chars": 70,
+     "text": "It is never too late to be what you might have been.",
+     "text_plain": "It is never too late to be what you might have been."},
+    {"ref": "rumi-1", "surah_name": "Rumi", "ayah_start": 1, "ayah_end": 1,
+     "theme": "patience", "chars": 66,
+     "text": "Be patient where you sit in the dark; the dawn is coming.",
+     "text_plain": "Be patient where you sit in the dark; the dawn is coming."}
+  ]
+}

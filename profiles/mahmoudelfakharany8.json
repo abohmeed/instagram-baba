@@ -1,0 +1,72 @@
+{
+  "name": "mahmoudelfakharany8",
+  "display_name": "صفحة المرحوم محمود الفخراني",
+  "notes": "Memorial account. Gentle, uplifting verses only - nothing about Hell or punishment.",
+  "timezone": "Africa/Cairo",
+  "post_window": { "start_hour": 9, "end_hour": 21 },
+
+  "content": {
+    "pack": "quran",
+    "pool": "content/quran/verses.json",
+    "direction": "rtl",
+    "language": "ar",
+    "strip_waqf": true
+  },
+
+  "image": {
+    "width": 1080,
+    "height": 1080,
+    "font": "assets/fonts/AmiriQuran.ttf",
+    "reference_font": "assets/fonts/Amiri-Regular.ttf",
+    "max_font_size": 92,
+    "min_font_size": 30,
+    "text_box": { "width_pct": 0.84, "height_pct": 0.58 },
+    "line_spacing": 1.78,
+    "overlay_opacity": 0.5,
+    "blur_radius": 2.0,
+    "vignette": 0.55,
+    "shadow": true,
+    "text_color": "#FFFFFF",
+    "reference_color": "#EFE7D6",
+    "reference_size": 36,
+    "signature": "@mahmoudelfakharany8",
+    "signature_size": 24,
+    "signature_color": "#FFFFFF",
+    "signature_opacity": 0.5
+  },
+
+  "background": {
+    "provider": "unsplash",
+    "queries": [
+      "misty forest", "mountain sunrise", "calm lake", "desert dunes at dusk",
+      "green valley", "olive trees", "sea horizon", "night sky stars",
+      "rain on leaves", "autumn forest path", "snowy peaks", "river canyon",
+      "wheat field golden hour", "clouds above mountains", "palm trees sunset",
+      "waterfall in forest", "meadow wildflowers", "fog over hills",
+      "sand ripples", "pine forest light"
+    ],
+    "orientation": "squarish",
+    "fallback_dir": "assets/backgrounds"
+  },
+
+  "caption": {
+    "template": "{text}\n\n{reference}\n\n{hashtags}",
+    "reference_format": "سورة {surah_name} — {ayah_label}",
+    "numerals": "arabic",
+    "hashtags": [
+      "#قرآن", "#القرآن_الكريم", "#آيات", "#تدبر", "#ذكر_الله",
+      "#إسلام", "#دين", "#آية_اليوم", "#خواطر_إيمانية", "#صدقة_جارية",
+      "#رحمك_الله_يا_أبي", "#ادعوا_له_بالرحمة", "#سكينة", "#طمأنينة", "#إيمان"
+    ],
+    "hashtag_count": 12
+  },
+
+  "secrets": {
+    "ig_user_id": "IG_USER_ID",
+    "ig_access_token": "IG_ACCESS_TOKEN",
+    "unsplash_access_key": "UNSPLASH_ACCESS_KEY",
+    "pexels_api_key": "PEXELS_API_KEY"
+  },
+
+  "publish": { "api": "facebook", "base_url": "auto", "posts_dir": "docs/posts", "keep_archive": true }
+}

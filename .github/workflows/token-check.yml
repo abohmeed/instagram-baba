@@ -1,0 +1,29 @@
+name: token check
+
+# Instagram long-lived tokens expire after 60 days. This runs weekly and fails
+# (which emails you) once the token has under 14 days left, so the streak never
+# breaks silently. Refreshing is one command - see SETUP.md, step 7.
+on:
+  schedule:
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        profile:
+          - mahmoudelfakharany8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - env:
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+        run: python -m src.main --profile "${{ matrix.profile }}" --check-token

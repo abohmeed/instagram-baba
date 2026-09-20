@@ -1,0 +1,86 @@
+name: daily post
+
+on:
+  # Runs hourly. Each run asks src/schedule.py whether this profile's randomly
+  # chosen moment for today has arrived; almost every run exits in a second.
+  schedule:
+    - cron: "5 * * * *"
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: "Profile to run (blank = all profiles in the matrix)"
+        required: false
+        default: ""
+      live:
+        description: "Actually post to Instagram"
+        type: boolean
+        default: false
+      force:
+        description: "Ignore the schedule and the already-posted check"
+        type: boolean
+        default: false
+
+concurrency:
+  group: daily-post
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Add a line per Instagram account you run from this repo.
+        profile:
+          - mahmoudelfakharany8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Skip profiles not selected by a manual run
+        id: gate
+        run: |
+          wanted="${{ github.event.inputs.profile }}"
+          if [ -n "$wanted" ] && [ "$wanted" != "${{ matrix.profile }}" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Post
+        if: steps.gate.outputs.run == 'true'
+        env:
+          # LIVE defaults to true for the scheduled run; a manual run posts only
+          # when you tick the box, so you can dry-run safely from the UI.
+          LIVE: ${{ github.event_name == 'schedule' && 'true' || github.event.inputs.live }}
+          SCHEDULE_SALT: ${{ secrets.SCHEDULE_SALT }}
+          # One entry per secret name referenced in profiles/*.json.
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: |
+          python -m src.main --profile "${{ matrix.profile }}" \
+            ${{ github.event.inputs.force == 'true' && '--force' || '' }}
+
+      - name: Keep the rendered image even if posting failed
+        if: always() && steps.gate.outputs.run == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: render-${{ matrix.profile }}-${{ github.run_id }}
+          path: |
+            docs/posts/${{ matrix.profile }}/
+            out/${{ matrix.profile }}/
+          if-no-files-found: ignore
+          retention-days: 14
